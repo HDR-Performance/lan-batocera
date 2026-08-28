@@ -39,11 +39,13 @@ After installation:
 - Upload ROMs inside the correct directory under **Games**, such as `gba`, `nes`,
   `snes`, or `megadrive`.
 
-The file manager accepts multi-file selection and drag-and-drop, runs up to ten
+The file manager accepts multi-file selection and drag-and-drop, runs up to three
 uploads concurrently, and uses 50 MB chunks for large transfers. The browser
 queue is uncapped and is intended to accept batches of up to 5,000 files;
-transfers beyond the ten active slots wait in the browser. A local upload guard
-rejects individual files larger than 1 GiB before they reach FileBrowser.
+transfers beyond the three active slots wait in the browser. ROM search indexing
+is disabled to prevent large uploads from saturating low-memory Pi hardware while
+ordinary folder browsing remains available. A local upload guard rejects
+individual files larger than 1 GiB before they reach FileBrowser.
 Available storage, browser memory, browser limits, and network reliability remain
 additional practical limits.
 

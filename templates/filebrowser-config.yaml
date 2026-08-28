@@ -6,7 +6,11 @@ server:
   sources:
     - path: "/userdata/roms"
       name: "Games"
-      config: { defaultEnabled: true }
+      config:
+        defaultEnabled: true
+        rules:
+          - folderPath: "/"
+            viewable: true
     - path: "/userdata/bios"
       name: "BIOS"
       config: { defaultEnabled: true }
@@ -22,9 +26,10 @@ auth:
   methods:
     password: { enabled: true, minLength: 8, signup: false }
 userDefaults:
-  showSelectMultiple: true
+  listing:
+    showSelectMultiple: true
   fileLoading:
-    maxConcurrentUpload: 10
+    maxConcurrentUpload: 3
     uploadChunkSizeMb: 50
     downloadChunkSizeMb: 0
 frontend:
