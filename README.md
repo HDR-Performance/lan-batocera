@@ -40,11 +40,12 @@ After installation:
   `snes`, or `megadrive`.
 
 The file manager accepts multi-file selection and drag-and-drop, runs up to ten
-uploads concurrently, and uses 50 MB chunks for large transfers. Batches of 100
-files are supported; transfers beyond the ten active slots wait in the browser's
-queue. A local upload guard rejects individual files larger than 1 GiB before
-they reach FileBrowser. Available storage, browser limits, and network reliability
-remain additional practical limits.
+uploads concurrently, and uses 50 MB chunks for large transfers. The browser
+queue is uncapped and is intended to accept batches of up to 5,000 files;
+transfers beyond the ten active slots wait in the browser. A local upload guard
+rejects individual files larger than 1 GiB before they reach FileBrowser.
+Available storage, browser memory, browser limits, and network reliability remain
+additional practical limits.
 
 ## Security boundary
 
