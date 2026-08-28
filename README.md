@@ -8,9 +8,10 @@ Batocera LAN Arcade adds two local-network web services to a Batocera device:
 The arcade uses [EmulatorJS](https://emulatorjs.org/) in the client browser. The
 file manager uses [FileBrowser Quantum](https://github.com/gtsteffaniak/filebrowser).
 Both services live in Batocera's persistent `/userdata` partition and start with
-Batocera's supported user-service system. The library groups games into console
-and handheld categories, supports system filtering and title search, and returns
-to the library after EmulatorJS completes its exit and save cleanup.
+Batocera's supported user-service system. The library provides console tiles
+with game counts, console and handheld categories, system filtering, title
+search, per-browser favorites and recently played history, and returns to the
+library after EmulatorJS completes its exit and save cleanup.
 
 ## Supported hardware
 
