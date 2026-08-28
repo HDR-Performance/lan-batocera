@@ -26,15 +26,13 @@ if [ ! -x "$FB_ROOT/filebrowser" ]; then
   mv "$FB_ROOT/filebrowser.download" "$FB_ROOT/filebrowser"
 fi
 
+NEW_ACCOUNT=0
 if [ ! -f "$FB_ROOT/config.yaml" ]; then
   install -m 0600 "$APP_ROOT/templates/filebrowser-config.yaml" "$FB_ROOT/config.yaml"
 fi
 
 if [ ! -f "$FB_ROOT/filebrowser.db" ]; then
-  cd "$FB_ROOT"
-  FILEBROWSER_CONFIG="$FB_ROOT/config.yaml" "$FB_ROOT/filebrowser" set user -c "$FB_ROOT/config.yaml" -u Batocera,Batocera -a
-  chmod 0600 "$FB_ROOT/config.yaml"
-  printf '\nFile manager first login\nUsername: Batocera\nPassword: Batocera\nChange both in Settings after signing in.\n\n'
+  NEW_ACCOUNT=1
 else
   echo "Keeping the existing file-manager account and password."
 fi
@@ -43,6 +41,10 @@ batocera-services enable emulatorjs_lan
 batocera-services enable filebrowser_quantum
 batocera-services restart emulatorjs_lan || "$SERVICE_ROOT/emulatorjs_lan" start
 batocera-services restart filebrowser_quantum || "$SERVICE_ROOT/filebrowser_quantum" start
+
+if [ "$NEW_ACCOUNT" = "1" ]; then
+  printf '\nFile manager first login\nUsername: Batocera\nPassword: Batocera\nChange both in Profile -> Security after signing in.\n\n'
+fi
 
 IP_ADDRESS="$(hostname -I | awk '{print $1}')"
 echo "Arcade:      http://${IP_ADDRESS}:8080"
