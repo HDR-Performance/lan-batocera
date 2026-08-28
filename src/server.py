@@ -10,22 +10,22 @@ ROMS_ROOT = "/userdata/roms"
 PORT = 8080
 
 SYSTEMS = {
-    "nes": ("nes", {".nes", ".zip"}),
-    "snes": ("snes", {".sfc", ".smc", ".zip"}),
-    "megadrive": ("segaMD", {".bin", ".gen", ".md", ".zip"}),
-    "mastersystem": ("segaMS", {".sms", ".zip"}),
-    "gamegear": ("segaGG", {".gg", ".zip"}),
-    "gb": ("gb", {".gb", ".zip"}),
-    "gbc": ("gb", {".gbc", ".zip"}),
-    "gba": ("gba", {".gba", ".zip"}),
-    "n64": ("n64", {".n64", ".v64", ".z64", ".zip"}),
-    "atari2600": ("atari2600", {".a26", ".bin", ".zip"}),
-    "atari7800": ("atari7800", {".a78", ".bin", ".zip"}),
-    "lynx": ("lynx", {".lnx", ".zip"}),
-    "ngp": ("ngp", {".ngp", ".ngc", ".zip"}),
-    "ngpc": ("ngp", {".ngp", ".ngc", ".zip"}),
-    "wswan": ("ws", {".ws", ".wsc", ".zip"}),
-    "wswanc": ("ws", {".ws", ".wsc", ".zip"}),
+    "nes": ("nes", "Nintendo Entertainment System", "Console", {".nes", ".zip"}),
+    "snes": ("snes", "Super Nintendo", "Console", {".sfc", ".smc", ".zip"}),
+    "megadrive": ("segaMD", "Sega Genesis / Mega Drive", "Console", {".bin", ".gen", ".md", ".zip"}),
+    "mastersystem": ("segaMS", "Sega Master System", "Console", {".sms", ".zip"}),
+    "gamegear": ("segaGG", "Sega Game Gear", "Handheld", {".gg", ".zip"}),
+    "gb": ("gb", "Nintendo Game Boy", "Handheld", {".gb", ".zip"}),
+    "gbc": ("gb", "Nintendo Game Boy Color", "Handheld", {".gbc", ".zip"}),
+    "gba": ("gba", "Nintendo Game Boy Advance", "Handheld", {".gba", ".zip"}),
+    "n64": ("n64", "Nintendo 64", "Console", {".n64", ".v64", ".z64", ".zip"}),
+    "atari2600": ("atari2600", "Atari 2600", "Console", {".a26", ".bin", ".zip"}),
+    "atari7800": ("atari7800", "Atari 7800", "Console", {".a78", ".bin", ".zip"}),
+    "lynx": ("lynx", "Atari Lynx", "Handheld", {".lnx", ".zip"}),
+    "ngp": ("ngp", "Neo Geo Pocket", "Handheld", {".ngp", ".ngc", ".zip"}),
+    "ngpc": ("ngp", "Neo Geo Pocket Color", "Handheld", {".ngp", ".ngc", ".zip"}),
+    "wswan": ("ws", "WonderSwan", "Handheld", {".ws", ".wsc", ".zip"}),
+    "wswanc": ("ws", "WonderSwan Color", "Handheld", {".ws", ".wsc", ".zip"}),
 }
 
 
@@ -39,7 +39,7 @@ def safe_join(root, relative):
 
 def games():
     result = []
-    for system, (core, extensions) in SYSTEMS.items():
+    for system, (core, system_name, category, extensions) in SYSTEMS.items():
         folder = os.path.join(ROMS_ROOT, system)
         if not os.path.isdir(folder):
             continue
@@ -50,8 +50,10 @@ def games():
                 full = os.path.join(base, filename)
                 relative = os.path.relpath(full, ROMS_ROOT).replace(os.sep, "/")
                 result.append({"name": os.path.splitext(filename)[0], "system": system,
+                               "systemName": system_name, "category": category,
                                "core": core, "path": relative})
-    return sorted(result, key=lambda game: (game["system"], game["name"].lower()))
+    return sorted(result, key=lambda game: (game["category"], game["systemName"],
+                                            game["name"].lower()))
 
 
 class Handler(SimpleHTTPRequestHandler):
