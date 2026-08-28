@@ -1,0 +1,17 @@
+#!/bin/bash
+PIDFILE=/var/run/filebrowser-quantum.pid
+APPDIR=/userdata/system/filebrowser-quantum
+LOG=/userdata/system/logs/filebrowser-quantum.log
+case "$1" in
+  start)
+    mkdir -p "$APPDIR/cache" /userdata/system/logs
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then exit 0; fi
+    cd "$APPDIR" || exit 1
+    FILEBROWSER_CONFIG="$APPDIR/config.yaml" "$APPDIR/filebrowser" >>"$LOG" 2>&1 &
+    echo $! > "$PIDFILE"
+    ;;
+  stop)
+    if [ -f "$PIDFILE" ]; then kill "$(cat "$PIDFILE")" 2>/dev/null || true; rm -f "$PIDFILE"; fi
+    ;;
+  restart) "$0" stop; "$0" start ;;
+esac

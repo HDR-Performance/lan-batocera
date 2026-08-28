@@ -1,0 +1,23 @@
+server:
+  port: 8081
+  database: "/userdata/system/filebrowser-quantum/filebrowser.db"
+  cacheDir: "/userdata/system/filebrowser-quantum/cache"
+  sources:
+    - path: "/userdata/roms"
+      name: "Games"
+      config: { defaultEnabled: true }
+    - path: "/userdata/bios"
+      name: "BIOS"
+      config: { defaultEnabled: true }
+    - path: "/userdata/saves"
+      name: "Saves"
+      config: { defaultEnabled: true }
+    - path: "/userdata/screenshots"
+      name: "Screenshots"
+      config: { defaultEnabled: true }
+auth:
+  methods:
+    password: { enabled: true, minLength: 8, signup: false }
+frontend:
+  name: "Batocera File Manager"
+  disableDefaultLinks: true
