@@ -44,7 +44,7 @@ class Proxy(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0") or 0)
         headers = {key: value for key, value in self.headers.items()
                    if key.lower() not in HOP_HEADERS}
-        headers["Host"] = f"{BACKEND_HOST}:{BACKEND_PORT}"
+        headers["Host"] = self.headers.get("Host", f"{BACKEND_HOST}:{BACKEND_PORT}")
         connection = http.client.HTTPConnection(BACKEND_HOST, BACKEND_PORT, timeout=300)
         try:
             connection.putrequest(self.command, self.path, skip_host=True, skip_accept_encoding=True)
