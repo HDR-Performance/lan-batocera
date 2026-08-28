@@ -1,5 +1,6 @@
 server:
-  port: 8081
+  port: 8082
+  listen: "127.0.0.1"
   database: "/userdata/system/filebrowser-quantum/filebrowser.db"
   cacheDir: "/userdata/system/filebrowser-quantum/cache"
   sources:

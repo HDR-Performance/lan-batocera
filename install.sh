@@ -14,6 +14,7 @@ if [ "$(uname -m)" != "aarch64" ]; then echo "This release currently supports aa
 
 mkdir -p "$ARCADE_ROOT/web" "$FB_ROOT/cache" "$SERVICE_ROOT" /userdata/system/logs
 install -m 0755 "$APP_ROOT/src/server.py" "$ARCADE_ROOT/server.py"
+install -m 0755 "$APP_ROOT/src/upload_proxy.py" "$FB_ROOT/upload_proxy.py"
 install -m 0644 "$APP_ROOT/web/index.html" "$ARCADE_ROOT/web/index.html"
 install -m 0644 "$APP_ROOT/web/play.html" "$ARCADE_ROOT/web/play.html"
 install -m 0755 "$APP_ROOT/services/emulatorjs_lan" "$SERVICE_ROOT/emulatorjs_lan"

@@ -1,5 +1,6 @@
 #!/bin/bash
 PIDFILE=/var/run/filebrowser-quantum.pid
+PROXYPID=/var/run/filebrowser-upload-proxy.pid
 APPDIR=/userdata/system/filebrowser-quantum
 LOG=/userdata/system/logs/filebrowser-quantum.log
 case "$1" in
@@ -9,9 +10,12 @@ case "$1" in
     cd "$APPDIR" || exit 1
     FILEBROWSER_CONFIG="$APPDIR/config.yaml" "$APPDIR/filebrowser" >>"$LOG" 2>&1 &
     echo $! > "$PIDFILE"
+    /usr/bin/python3 "$APPDIR/upload_proxy.py" >>"$LOG" 2>&1 &
+    echo $! > "$PROXYPID"
     ;;
   stop)
     if [ -f "$PIDFILE" ]; then kill "$(cat "$PIDFILE")" 2>/dev/null || true; rm -f "$PIDFILE"; fi
+    if [ -f "$PROXYPID" ]; then kill "$(cat "$PROXYPID")" 2>/dev/null || true; rm -f "$PROXYPID"; fi
     ;;
   restart) "$0" stop; "$0" start ;;
 esac
