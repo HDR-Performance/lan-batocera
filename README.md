@@ -39,6 +39,11 @@ After installation:
 - Upload ROMs inside the correct directory under **Games**, such as `gba`, `nes`,
   `snes`, or `megadrive`.
 
+The file manager accepts multi-file selection and drag-and-drop, runs up to ten
+uploads concurrently, and uses 50 MB chunks for large transfers. No application
+quota or per-file upload limit is configured. Available storage, browser limits,
+and network reliability remain the practical limits.
+
 ## Security boundary
 
 The file manager deliberately exposes only these persistent data areas:

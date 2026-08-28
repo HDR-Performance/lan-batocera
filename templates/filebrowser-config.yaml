@@ -20,6 +20,12 @@ auth:
   adminPassword: "Batocera"
   methods:
     password: { enabled: true, minLength: 8, signup: false }
+userDefaults:
+  showSelectMultiple: true
+  fileLoading:
+    maxConcurrentUpload: 10
+    uploadChunkSizeMb: 50
+    downloadChunkSizeMb: 0
 frontend:
   name: "Batocera File Manager"
   disableDefaultLinks: true
