@@ -45,7 +45,9 @@ queue is uncapped and is intended to accept batches of up to 5,000 files;
 transfers beyond the three active slots wait in the browser. ROM search indexing
 is disabled to prevent large uploads from saturating low-memory Pi hardware while
 ordinary folder browsing remains available. A local upload guard rejects
-individual files larger than 1 GiB before they reach FileBrowser.
+individual files larger than 1 GiB before they reach FileBrowser. Login sessions
+remain valid for seven days so the default two-hour token expiration cannot
+interrupt a long bulk upload.
 Available storage, browser memory, browser limits, and network reliability remain
 additional practical limits.
 

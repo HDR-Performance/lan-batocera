@@ -23,6 +23,8 @@ server:
 auth:
   adminUsername: "Batocera"
   adminPassword: "Batocera"
+  # Keep long bulk-upload sessions alive for seven days.
+  tokenExpirationHours: 168
   methods:
     password: { enabled: true, minLength: 8, signup: false }
 userDefaults:
