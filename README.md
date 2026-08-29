@@ -84,6 +84,11 @@ unsafe archives are kept and reported in the final results. Password-protected
 and multi-volume RAR archives are retained and reported rather than partially
 processed. 7z archives are not currently included in the batch operation.
 
+When **Auto Extract** is selected while browsing a Games or BIOS folder, the
+tools page reads that current FileBrowser location and starts the batch for it
+immediately. The directory form remains available as a fallback when a browser
+does not provide the current-page location.
+
 ## Security boundary
 
 The file manager deliberately exposes only these persistent data areas:

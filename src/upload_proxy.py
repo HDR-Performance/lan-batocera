@@ -10,6 +10,7 @@ import uuid
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import PurePosixPath
+from urllib.parse import unquote, urlsplit
 
 LISTEN_PORT = 8081
 BACKEND_HOST = "127.0.0.1"
@@ -38,6 +39,32 @@ TOOLS_PAGE = (TOOLS_PAGE.replace(b"every ZIP", b"every ZIP or RAR")
 EXTRACT_JOBS = {}
 EXTRACT_JOBS_LOCK = threading.Lock()
 ACTIVE_EXTRACT_JOB = None
+
+
+def _directory_from_referer(referer):
+    try:
+        path = unquote(urlsplit(referer or "").path)
+    except ValueError:
+        return None
+    prefix = "/files/"
+    if not path.startswith(prefix):
+        return None
+    parts = path[len(prefix):].strip("/").split("/", 1)
+    if not parts or parts[0] not in EXTRACT_ROOTS:
+        return None
+    directory = parts[1].strip("/") if len(parts) > 1 else ""
+    return {"source": parts[0], "directory": directory}
+
+
+def _tools_page_for_context(referer):
+    context = _directory_from_referer(referer)
+    if context is None:
+        return TOOLS_PAGE
+    source = json.dumps(context["source"]).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    directory = json.dumps(context["directory"]).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    auto_start = ("<script>autoSource.value=" + source + ";autoDirectory.value=" + directory +
+                  ";confirmDelete.checked=true;autoSubmit.click();</script>").encode()
+    return TOOLS_PAGE.replace(b"</body>", auto_start + b"</body>")
 
 
 def _safe_root_path(root, relative, require_directory=False):
@@ -316,7 +343,7 @@ class Proxy(BaseHTTPRequestHandler):
             self.end_headers()
             return
         body = b'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LAN Batocera ZIP Extractor</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#091018;color:#eef4f7;font:16px system-ui}main{width:min(620px,92vw);margin:7vh auto}a{color:#41d6c3}form{display:grid;gap:14px;background:#111e27;border:1px solid #29404c;border-radius:14px;padding:20px}label{display:grid;gap:6px;font-weight:650}input,select,button{min-height:48px;border:1px solid #29404c;border-radius:9px;background:#172731;color:#fff;padding:10px;font:inherit}button{border-color:#41d6c3;cursor:pointer}small,#result{color:#9eb1bc}#result{margin-top:16px;white-space:pre-wrap}.ok{color:#41d6c3!important}.error{color:#ff7b72!important}</style></head><body><main><a href="/">\xe2\x86\x90 File Manager</a><h1>Extract a ZIP archive</h1><p>Extract an uploaded ZIP into Games or BIOS. Existing destination folders are protected from overwrite.</p><form id="form"><label>Storage area<select id="source"><option>Games</option><option>BIOS</option></select></label><label>ZIP path<input id="archive" required placeholder="snes/my-rom-pack.zip"><small>Path relative to the selected storage area.</small></label><label>Destination folder (optional)<input id="destination" placeholder="snes/my-rom-pack"><small>Blank creates a folder beside the ZIP using its filename.</small></label><button id="submit">Extract ZIP</button></form><div id="result"></div></main><script>form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;result.className='';result.textContent='Extracting...';try{const r=await fetch('/lan-batocera/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:source.value,archive:archive.value,destination:destination.value})}),data=await r.json();if(!r.ok)throw Error(data.error||'Extraction failed');result.className='ok';result.textContent=`Extracted ${data.files.toLocaleString()} files (${data.bytes.toLocaleString()} bytes) to ${data.destination}` }catch(err){result.className='error';result.textContent=err.message}finally{submit.disabled=false}};</script></body></html>'''
-        body = TOOLS_PAGE
+        body = _tools_page_for_context(self.headers.get("Referer"))
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))

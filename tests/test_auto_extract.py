@@ -18,6 +18,18 @@ def make_zip(path, files):
 
 
 class AutoExtractTests(unittest.TestCase):
+    def test_current_file_manager_directory_becomes_auto_extract_context(self):
+        context = proxy._directory_from_referer(
+            "http://192.168.0.148:8081/files/Games/sega32x/My%20Folder/")
+        self.assertEqual(context, {"source": "Games", "directory": "sega32x/My Folder"})
+        page = proxy._tools_page_for_context(
+            "http://192.168.0.148:8081/files/Games/sega32x/")
+        self.assertIn(b'autoDirectory.value="sega32x"', page)
+        self.assertIn(b"autoSubmit.click()", page)
+
+    def test_unknown_referer_keeps_manual_archive_tools(self):
+        self.assertIs(proxy._tools_page_for_context("http://example.test/"), proxy.TOOLS_PAGE)
+
     def test_parses_and_validates_rar_listing(self):
         listing = """7-Zip\n----------
 Path = Game/Game.bin
