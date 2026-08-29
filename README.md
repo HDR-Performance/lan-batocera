@@ -69,6 +69,12 @@ interrupt a long bulk upload.
 Available storage, browser memory, browser limits, and network reliability remain
 additional practical limits.
 
+The desktop listing header includes **Type** alongside Name, Size, and Last
+Modified. Selecting Type sorts folders and files by FileBrowser's MIME file-type
+field and selecting it again reverses the order. This integration targets the
+bundled FileBrowser Quantum v1.5.3 frontend and leaves unknown future frontend
+assets unchanged instead of applying an unsafe partial patch.
+
 Select **Auto Extract** in the file manager to open the archive tools and unpack an uploaded ZIP or RAR into Games
 or BIOS. Extraction requires a valid file-manager login, refuses path traversal
 and symbolic links, never overwrites an existing destination folder, limits an

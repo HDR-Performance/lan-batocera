@@ -1,4 +1,5 @@
 import importlib.util
+import gzip
 import os
 import tempfile
 import unittest
@@ -18,6 +19,36 @@ def make_zip(path, files):
 
 
 class AutoExtractTests(unittest.TestCase):
+    def test_filebrowser_frontend_gains_real_type_sort_control(self):
+        fixture = b"|".join(old for old, _new in proxy.FILE_TYPE_JS_PATCHES)
+        patched, changed = proxy._patch_file_type_sort(
+            "/public/static/assets/index-test.js", fixture)
+        self.assertTrue(changed)
+        self.assertIn(b'typeSorted(){return be.sorting().by==="type"}', patched)
+        self.assertIn(b'r.sort("type")', patched)
+        self.assertIn(b"Sort by file type", patched)
+
+    def test_unrecognized_frontend_asset_is_not_modified(self):
+        original = b"console.log('different version')"
+        patched, changed = proxy._patch_file_type_sort(
+            "/public/static/assets/index-other.js", original)
+        self.assertFalse(changed)
+        self.assertIs(patched, original)
+
+    def test_file_type_patch_fixture_survives_gzip_delivery(self):
+        fixture = b"|".join(old for old, _new in proxy.FILE_TYPE_JS_PATCHES)
+        decoded = gzip.decompress(gzip.compress(fixture))
+        patched, changed = proxy._patch_file_type_sort(
+            "/public/static/assets/index-compressed.js", decoded)
+        self.assertTrue(changed)
+        self.assertIn(b"Sort by file type", patched)
+
+    def test_filebrowser_html_versions_the_patched_frontend_asset(self):
+        html = b'<script type="module" src="/public/static/assets/index-test.js"></script>'
+        versioned, changed = proxy._version_filebrowser_html(html)
+        self.assertTrue(changed)
+        self.assertIn(b'index-test.js?lan-batocera-type-sort=1"', versioned)
+
     def test_current_file_manager_directory_becomes_auto_extract_context(self):
         context = proxy._directory_from_referer(
             "http://192.168.0.148:8081/files/Games/sega32x/My%20Folder/")

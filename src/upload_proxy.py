@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import gzip
 import http.client
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -39,6 +41,33 @@ TOOLS_PAGE = (TOOLS_PAGE.replace(b"every ZIP", b"every ZIP or RAR")
 EXTRACT_JOBS = {}
 EXTRACT_JOBS_LOCK = threading.Lock()
 ACTIVE_EXTRACT_JOB = None
+
+FILE_TYPE_JS_PATCHES = (
+    (b'modifiedSorted(){return be.sorting().by==="modified"},durationSorted()',
+     b'modifiedSorted(){return be.sorting().by==="modified"},typeSorted(){return be.sorting().by==="type"},durationSorted()'),
+    (b'modifiedIcon(){return this.modifiedSorted&&this.ascOrdered?"arrow_downward":"arrow_upward"},durationIcon()',
+     b'modifiedIcon(){return this.modifiedSorted&&this.ascOrdered?"arrow_downward":"arrow_upward"},typeIcon(){return this.typeSorted&&this.ascOrdered?"arrow_downward":"arrow_upward"},durationIcon()'),
+    (b'||t==="modified"&&this.modifiedIcon==="arrow_upward"||t==="duration"',
+     b'||t==="modified"&&this.modifiedIcon==="arrow_upward"||t==="type"&&this.typeIcon==="arrow_upward"||t==="duration"'),
+    (b'],10,V2e),M("p",{class:mt([{active:r.sizeSorted},"size"])',
+     b'],10,V2e),M("p",{class:mt([{active:r.typeSorted},"size"]),role:"button",tabindex:"0",onClick:a=>r.sort("type"),title:"Sort by file type","aria-label":"Sort by file type"},[r.typeSorted?(H(),J("i",G2e,j(r.typeIcon),1)):Me("",!0),M("span",null,"Type")],10,V2e),M("p",{class:mt([{active:r.sizeSorted},"size"])'),
+)
+
+
+def _patch_file_type_sort(path, body):
+    if not (path.startswith("/public/static/assets/index-") and path.endswith(".js")):
+        return body, False
+    if not all(old in body for old, _new in FILE_TYPE_JS_PATCHES):
+        return body, False
+    for old, new in FILE_TYPE_JS_PATCHES:
+        body = body.replace(old, new, 1)
+    return body, True
+
+
+def _version_filebrowser_html(body):
+    pattern = rb'(/public/static/assets/index-[^"\' ?]+\.js)(["\'])'
+    updated, count = re.subn(pattern, rb'\1?lan-batocera-type-sort=1\2', body, count=1)
+    return updated, count == 1
 
 
 def _directory_from_referer(referer):
@@ -442,6 +471,10 @@ class Proxy(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0") or 0)
         headers = {key: value for key, value in self.headers.items()
                    if key.lower() not in HOP_HEADERS}
+        is_frontend_script = (self.path.startswith("/public/static/assets/index-") and
+                              self.path.split("?", 1)[0].endswith(".js"))
+        if is_frontend_script:
+            headers["Accept-Encoding"] = "identity"
         headers["Host"] = self.headers.get("Host", f"{BACKEND_HOST}:{BACKEND_PORT}")
         connection = http.client.HTTPConnection(BACKEND_HOST, BACKEND_PORT, timeout=300)
         try:
@@ -457,14 +490,37 @@ class Proxy(BaseHTTPRequestHandler):
                 connection.send(chunk)
                 remaining -= len(chunk)
             response = connection.getresponse()
+            is_frontend_html = "text/html" in response.getheader("Content-Type", "").lower()
+            response_body = response.read() if is_frontend_script or is_frontend_html else None
+            patched = False
+            if response_body is not None:
+                candidate = response_body
+                if response.getheader("Content-Encoding", "").lower() == "gzip":
+                    try:
+                        candidate = gzip.decompress(response_body)
+                    except (OSError, EOFError):
+                        candidate = response_body
+                if is_frontend_script:
+                    candidate, patched = _patch_file_type_sort(self.path.split("?", 1)[0], candidate)
+                elif is_frontend_html:
+                    candidate, patched = _version_filebrowser_html(candidate)
+                if patched:
+                    response_body = candidate
             self.send_response(response.status, response.reason)
             for key, value in response.getheaders():
-                if key.lower() not in HOP_HEADERS:
+                if key.lower() not in HOP_HEADERS and not (patched and key.lower() in
+                                                            {"content-length", "content-encoding", "etag"}):
                     self.send_header(key, value)
+            if patched:
+                self.send_header("Content-Length", str(len(response_body)))
+                self.send_header("Cache-Control", "no-cache")
             self.send_header("Connection", "close")
             self.end_headers()
-            while chunk := response.read(1024 * 1024):
-                self.wfile.write(chunk)
+            if response_body is not None:
+                self.wfile.write(response_body)
+            else:
+                while chunk := response.read(1024 * 1024):
+                    self.wfile.write(chunk)
         except (ConnectionError, TimeoutError, http.client.HTTPException):
             self.send_error(502, "File manager backend unavailable")
         finally:
