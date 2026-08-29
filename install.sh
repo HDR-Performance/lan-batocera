@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_ROOT=/userdata/system/batocera-lan-arcade
+APP_ROOT="$(cd "$(dirname "$0")" && pwd)"
 ARCADE_ROOT=/userdata/system/emulatorjs-lan
 FB_ROOT=/userdata/system/filebrowser-quantum
 SERVICE_ROOT=/userdata/system/services

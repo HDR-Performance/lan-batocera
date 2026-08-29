@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#000000"><title>LAN Arcade</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#000000"><title>LAN Batocera</title>
 <style>html,body,#game{margin:0;width:100%;height:100%;background:#000;overscroll-behavior:none;touch-action:none}.back{position:fixed;z-index:100;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));min-height:46px;display:flex;align-items:center;padding:10px 15px;border:1px solid #ffffff55;border-radius:10px;background:#0c1720e8;color:#fff;text-decoration:none;font:600 14px system-ui;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.back:hover,.back:focus-visible{background:#234;outline:3px solid #41d6c3;outline-offset:2px}@media(pointer:coarse){.back{min-width:92px;min-height:50px;justify-content:center;font-size:15px}}</style></head>
 <body><a class="back" href="/">← Library</a><div id="game"></div><script>
 const p=new URLSearchParams(location.search),core=p.get('core'),path=p.get('path'),name=p.get('name')||'Game';
 if(!core||!path||path.includes('..'))location.replace('/');
-document.title=name+' — LAN Arcade';
+document.title=name+' — LAN Batocera';
 window.EJS_player='#game';window.EJS_core=core;window.EJS_gameName=name;
 window.EJS_gameUrl='/roms/'+path.split('/').map(encodeURIComponent).join('/');
 window.EJS_pathtodata='https://cdn.emulatorjs.org/stable/data/';

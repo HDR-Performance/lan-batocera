@@ -31,9 +31,13 @@ userDefaults:
   listing:
     showSelectMultiple: true
   fileLoading:
-    maxConcurrentUpload: 3
+    maxConcurrentUpload: 4
     uploadChunkSizeMb: 50
     downloadChunkSizeMb: 0
 frontend:
-  name: "Batocera File Manager"
+  name: "LAN Batocera File Manager"
   disableDefaultLinks: true
+  externalLinks:
+    - text: "Extract ZIP"
+      url: "/lan-batocera-tools"
+      title: "Safely extract a ZIP into Games or BIOS"

@@ -1,6 +1,6 @@
-# Batocera LAN Arcade
+# LAN Batocera
 
-Batocera LAN Arcade adds two local-network web services to a Batocera device:
+LAN Batocera adds two local-network web services to a Batocera device:
 
 - A browser-playable ROM library at `http://BATOCERA-IP:8080`
 - An authenticated drag-and-drop manager at `http://BATOCERA-IP:8081`
@@ -21,21 +21,32 @@ The installer targets Batocera v38 or newer on 64-bit ARM (`aarch64`), including
 the Raspberry Pi 3 B+. The arcade server itself is lightweight because the web
 browser performs the emulation.
 
-## Install
+## Install over SSH
 
-Download or clone this repository on another computer, then copy it to Batocera:
+Enable SSH in Batocera, find its LAN IP address, and connect from PowerShell or a
+terminal. The default Batocera SSH login is `root` / `linux` when security has
+not been enabled:
 
 ```bash
-scp -r batocera-lan-arcade root@BATOCERA-IP:/userdata/system/
 ssh root@BATOCERA-IP
-cd /userdata/system/batocera-lan-arcade
+```
+
+On the Batocera SSH prompt, download and install the public project:
+
+```bash
+cd /userdata/system
+curl -fL https://github.com/HDR-Performance/lan-batocera/archive/refs/heads/main.tar.gz -o /tmp/lan-batocera.tar.gz
+tar -xzf /tmp/lan-batocera.tar.gz
+test ! -e /userdata/system/lan-batocera || { echo "lan-batocera already exists; move or update it first"; exit 1; }
+mv /userdata/system/lan-batocera-main /userdata/system/lan-batocera
+cd /userdata/system/lan-batocera
+chmod +x install.sh uninstall.sh
 ./install.sh
 ```
 
-Batocera's default SSH login is `root` / `linux` when security has not been
-enabled. The file manager's first login is `Batocera` / `Batocera`. Change both
-from the account settings immediately after signing in; later restarts preserve
-the changed credentials.
+The file manager's first login is `Batocera` / `Batocera`. Change both from the
+account settings immediately after signing in; later restarts preserve the
+changed credentials.
 
 After installation:
 
@@ -43,11 +54,13 @@ After installation:
 - Open `http://BATOCERA-IP:8081` to upload and manage files.
 - Upload ROMs inside the correct directory under **Games**, such as `gba`, `nes`,
   `snes`, or `megadrive`.
+- Select **Refresh Games** in the arcade after adding ROMs to rescan supported
+  system folders without restarting the service.
 
-The file manager accepts multi-file selection and drag-and-drop, runs up to three
+The file manager accepts multi-file selection and drag-and-drop, runs up to four
 uploads concurrently, and uses 50 MB chunks for large transfers. The browser
 queue is uncapped and is intended to accept batches of up to 5,000 files;
-transfers beyond the three active slots wait in the browser. ROM search indexing
+transfers beyond the four active slots wait in the browser. ROM search indexing
 is disabled to prevent large uploads from saturating low-memory Pi hardware while
 ordinary folder browsing remains available. A local upload guard rejects
 individual files larger than 1 GiB before they reach FileBrowser. Login sessions
@@ -55,6 +68,12 @@ remain valid for seven days so the default two-hour token expiration cannot
 interrupt a long bulk upload.
 Available storage, browser memory, browser limits, and network reliability remain
 additional practical limits.
+
+Select **Extract ZIP** in the file manager to unpack an uploaded ZIP into Games
+or BIOS. Extraction requires a valid file-manager login, refuses path traversal
+and symbolic links, never overwrites an existing destination folder, limits an
+archive to 50,000 entries and 10 GiB expanded size, and removes a partial output
+folder if extraction fails. Refresh the arcade library after extracting ROMs.
 
 ## Security boundary
 
@@ -86,7 +105,7 @@ browser saves are separate from Batocera's native emulator saves.
 ## Remove
 
 ```bash
-cd /userdata/system/batocera-lan-arcade
+cd /userdata/system/lan-batocera
 ./uninstall.sh
 ```
 
