@@ -124,6 +124,9 @@ The current arcade loads the stable EmulatorJS engine from its public CDN, so th
 client browser needs internet access when starting a game. ROM data is served by
 the Batocera device over the LAN. Controllers connect to the browser device, and
 browser saves are separate from Batocera's native emulator saves.
+After choosing a game, select its **Start** button once. This deliberate browser
+interaction reliably unlocks WebAudio and the emulator core; automatic startup
+is disabled because browsers can suspend a new page until it receives input.
 
 ## Remove
 

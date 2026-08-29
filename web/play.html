@@ -8,7 +8,11 @@ document.title=name+' — LAN Batocera';
 window.EJS_player='#game';window.EJS_core=core;window.EJS_gameName=name;
 window.EJS_gameUrl='/roms/'+path.split('/').map(encodeURIComponent).join('/');
 window.EJS_pathtodata='https://cdn.emulatorjs.org/stable/data/';
-window.EJS_startOnLoaded=true;window.EJS_language='en-US';window.EJS_askBeforeExit=true;
+// Starting automatically on a newly navigated page can leave the WebAudio/core
+// suspended because browsers do not carry user activation across navigation.
+// EmulatorJS's start button supplies the required fresh interaction reliably.
+window.EJS_startOnLoaded=false;window.EJS_startButtonName='Start '+name;
+window.EJS_language='en-US';window.EJS_askBeforeExit=true;
 window.EJS_browserMode=matchMedia('(pointer:coarse)').matches?'mobile':'desktop';
 window.EJS_onExit=()=>location.replace('/');
 // Some stable CDN builds fail to invoke EJS_onExit after the core shuts down.
