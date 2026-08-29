@@ -38,6 +38,6 @@ frontend:
   name: "LAN Batocera File Manager"
   disableDefaultLinks: true
   externalLinks:
-    - text: "Extract ZIP"
+    - text: "Auto Extract"
       url: "/lan-batocera-tools"
-      title: "Safely extract a ZIP into Games or BIOS"
+      title: "Extract one ZIP or auto-extract a game directory"
