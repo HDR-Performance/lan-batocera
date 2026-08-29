@@ -36,9 +36,9 @@ On the Batocera SSH prompt, download and install the public project:
 ```bash
 cd /userdata/system
 curl -fL https://github.com/HDR-Performance/lan-batocera/archive/refs/heads/main.tar.gz -o /tmp/lan-batocera.tar.gz
-tar -xzf /tmp/lan-batocera.tar.gz
 test ! -e /userdata/system/lan-batocera || { echo "lan-batocera already exists; move or update it first"; exit 1; }
-mv /userdata/system/lan-batocera-main /userdata/system/lan-batocera
+mkdir /userdata/system/lan-batocera
+tar -xzf /tmp/lan-batocera.tar.gz -C /userdata/system/lan-batocera --strip-components=1
 cd /userdata/system/lan-batocera
 chmod +x install.sh uninstall.sh
 ./install.sh
