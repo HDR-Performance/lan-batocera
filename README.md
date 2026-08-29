@@ -14,6 +14,9 @@ search, per-browser favorites and recently played history, and returns to the
 library after EmulatorJS completes its exit and save cleanup. The responsive UI
 uses phone-sized touch targets and bottom navigation, desktop keyboard shortcuts,
 incremental card rendering, and automatic mobile/desktop EmulatorJS controls.
+Sega 32X libraries are scanned from `/userdata/roms/sega32x` and launched with
+EmulatorJS's PicoDrive-backed `sega32x` core. ZIP and 7z containers are supported
+alongside raw `.32x`, `.smd`, `.bin`, and `.md` ROMs.
 
 ## Supported hardware
 

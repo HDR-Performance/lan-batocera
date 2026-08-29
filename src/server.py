@@ -13,6 +13,7 @@ SYSTEMS = {
     "nes": ("nes", "Nintendo Entertainment System", "Console", {".nes", ".zip"}),
     "snes": ("snes", "Super Nintendo", "Console", {".sfc", ".smc", ".zip"}),
     "megadrive": ("segaMD", "Sega Genesis / Mega Drive", "Console", {".bin", ".gen", ".md", ".zip"}),
+    "sega32x": ("sega32x", "Sega 32X", "Console", {".32x", ".smd", ".bin", ".md", ".zip", ".7z"}),
     "mastersystem": ("segaMS", "Sega Master System", "Console", {".sms", ".zip"}),
     "gamegear": ("segaGG", "Sega Game Gear", "Handheld", {".gg", ".zip"}),
     "gb": ("gb", "Nintendo Game Boy", "Handheld", {".gb", ".zip"}),
