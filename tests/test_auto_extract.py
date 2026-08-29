@@ -18,6 +18,44 @@ def make_zip(path, files):
 
 
 class AutoExtractTests(unittest.TestCase):
+    def test_parses_and_validates_rar_listing(self):
+        listing = """7-Zip\n----------
+Path = Game/Game.bin
+Folder = -
+Size = 12
+Encrypted = -
+Split Before = -
+Split After = -
+
+Path = Game
+Folder = +
+Size = 0
+Encrypted = -
+Split Before = -
+Split After = -
+"""
+        records, size = proxy._parse_7z_listing(listing)
+        self.assertEqual(len(records), 2)
+        self.assertEqual(size, 12)
+
+    def test_rejects_unsafe_or_encrypted_rar_listing(self):
+        unsafe = """7-Zip\n----------
+Path = ../escape.bin
+Folder = -
+Size = 1
+Encrypted = -
+"""
+        encrypted = """7-Zip\n----------
+Path = game.bin
+Folder = -
+Size = 1
+Encrypted = +
+"""
+        with self.assertRaisesRegex(ValueError, "unsafe path"):
+            proxy._parse_7z_listing(unsafe)
+        with self.assertRaisesRegex(ValueError, "Password-protected"):
+            proxy._parse_7z_listing(encrypted)
+
     def test_extracts_beside_archive_and_deletes_zip(self):
         with tempfile.TemporaryDirectory() as directory:
             archive = os.path.join(directory, "game.zip")

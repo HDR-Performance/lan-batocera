@@ -69,19 +69,20 @@ interrupt a long bulk upload.
 Available storage, browser memory, browser limits, and network reliability remain
 additional practical limits.
 
-Select **Auto Extract** in the file manager to open the archive tools and unpack an uploaded ZIP into Games
+Select **Auto Extract** in the file manager to open the archive tools and unpack an uploaded ZIP or RAR into Games
 or BIOS. Extraction requires a valid file-manager login, refuses path traversal
 and symbolic links, never overwrites an existing destination folder, limits an
 archive to 50,000 entries and 10 GiB expanded size, and removes a partial output
 folder if extraction fails. Refresh the arcade library after extracting ROMs.
 
 The same Archive Tools page includes **Auto Extract Directory**. It scans one
-selected Games or BIOS directory for ZIP files (not its subdirectories), handles
+selected Games or BIOS directory for ZIP and RAR files (not its subdirectories), handles
 them sequentially to limit Pi memory and storage load, and places each archive's
-contents directly beside that archive. A ZIP is deleted only after its complete
+contents directly beside that archive. An archive is deleted only after its complete
 contents have been validated and moved successfully. Conflicting, corrupt, or
-unsafe archives are kept and reported in the final results. Auto Extract supports
-ZIP files; RAR and 7z archives are not currently included in the batch operation.
+unsafe archives are kept and reported in the final results. Password-protected
+and multi-volume RAR archives are retained and reported rather than partially
+processed. 7z archives are not currently included in the batch operation.
 
 ## Security boundary
 

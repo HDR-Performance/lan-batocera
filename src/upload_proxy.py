@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import threading
 import uuid
 import zipfile
@@ -16,6 +17,7 @@ BACKEND_PORT = 8082
 MAX_FILE_BYTES = 1024 * 1024 * 1024
 MAX_EXTRACTED_BYTES = 10 * 1024 * 1024 * 1024
 MAX_ARCHIVE_ENTRIES = 50000
+SEVEN_ZIP = "/usr/bin/7z"
 EXTRACT_ROOTS = {"Games": "/userdata/roms", "BIOS": "/userdata/bios"}
 HOP_HEADERS = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
                "te", "trailers", "transfer-encoding", "upgrade", "host"}
@@ -24,6 +26,15 @@ submit.onclick=async()=>{submit.disabled=true;result.className='result';result.t
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 autoSubmit.onclick=async()=>{if(!autoDirectory.value.trim()){autoResult.className='result error';autoResult.textContent='Enter a directory path.';return}if(!confirmDelete.checked){autoResult.className='result error';autoResult.textContent='Confirm deletion of successfully extracted ZIPs.';return}autoSubmit.disabled=true;progress.hidden=false;progress.value=0;progress.max=1;autoResult.className='result';autoResult.textContent='Starting...';try{let r=await fetch('/lan-batocera/api/auto-extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:autoSource.value,directory:autoDirectory.value,deleteArchives:true})}),data=await r.json();if(!r.ok)throw Error(data.error||'Could not start');while(true){await sleep(1000);r=await fetch(`/lan-batocera/api/auto-extract?id=${encodeURIComponent(data.id)}`);data=await r.json();if(!r.ok)throw Error(data.error||'Status unavailable');progress.max=Math.max(data.total,1);progress.value=data.processed;autoResult.textContent=`${data.status==='complete'?'Finished':'Processing'} ${data.processed}/${data.total}${data.current?'\\nCurrent: '+data.current:''}\\nSucceeded: ${data.completed}  Failed: ${data.failed}`;if(data.status==='complete'){autoResult.className=data.failed?'result error':'result ok';if(data.errors.length)autoResult.textContent+='\\n\\nKept because of errors:\\n'+data.errors.map(item=>`${item.archive}: ${item.error}`).join('\\n');break}}}catch(err){autoResult.className='result error';autoResult.textContent=err.message}finally{autoSubmit.disabled=false}};
 </script></body></html>'''.encode()
+TOOLS_PAGE = (TOOLS_PAGE.replace(b"every ZIP", b"every ZIP or RAR")
+              .replace(b"Each ZIP", b"Each archive")
+              .replace(b"Delete each ZIP", b"Delete each archive")
+              .replace(b"A ZIP that", b"An archive that")
+              .replace(b"Auto Extract ZIPs", b"Auto Extract ZIPs and RARs")
+              .replace(b"Extract One ZIP to a Folder", b"Extract One ZIP or RAR to a Folder")
+              .replace(b"ZIP path", b"Archive path")
+              .replace(b"snes/my-rom-pack.zip", b"sega32x/my-game.rar")
+              .replace(b"Extract ZIP</button>", b"Extract Archive</button>"))
 EXTRACT_JOBS = {}
 EXTRACT_JOBS_LOCK = threading.Lock()
 ACTIVE_EXTRACT_JOB = None
@@ -56,6 +67,47 @@ def _validated_zip_entries(package):
     return entries, total
 
 
+def _validate_archive_path(name):
+    normalized = name.replace("\\", "/")
+    parts = PurePosixPath(normalized).parts
+    if (not parts or normalized.startswith("/") or ".." in parts or
+            (len(normalized) > 2 and normalized[1] == ":" and normalized[2] == "/")):
+        raise ValueError("Archive contains an unsafe path.")
+    return parts
+
+
+def _parse_7z_listing(output):
+    if "----------" not in output:
+        raise ValueError("RAR metadata could not be read.")
+    records = []
+    for block in output.split("----------", 1)[1].strip().split("\n\n"):
+        record = {}
+        for line in block.splitlines():
+            if " = " in line:
+                key, value = line.split(" = ", 1)
+                record[key] = value
+        if record.get("Path"):
+            records.append(record)
+    if len(records) > MAX_ARCHIVE_ENTRIES:
+        raise ValueError("Archive contains too many entries.")
+    total = 0
+    for record in records:
+        _validate_archive_path(record["Path"])
+        if record.get("Symbolic Link") or record.get("Hard Link"):
+            raise ValueError("Archive contains a link.")
+        if record.get("Encrypted") == "+":
+            raise ValueError("Password-protected archives are not supported.")
+        if record.get("Split Before") == "+" or record.get("Split After") == "+":
+            raise ValueError("Multi-volume RAR archives are not supported.")
+        try:
+            total += int(record.get("Size", "0"))
+        except ValueError as error:
+            raise ValueError("RAR contains invalid size metadata.") from error
+    if total > MAX_EXTRACTED_BYTES:
+        raise ValueError("Archive expands beyond the 10 GiB safety limit.")
+    return records, total
+
+
 def _extract_to_new_directory(archive, destination):
     with zipfile.ZipFile(archive) as package:
         entries, total = _validated_zip_entries(package)
@@ -80,12 +132,54 @@ def _extract_to_new_directory(archive, destination):
     return files, total
 
 
-def _extract_zip_beside_archive(archive):
+def _extract_rar_to_new_directory(archive, destination):
+    if not os.path.isfile(SEVEN_ZIP):
+        raise ValueError("RAR extraction is unavailable on this device.")
+    listing = subprocess.run(
+        [SEVEN_ZIP, "l", "-slt", "-sccUTF-8", "--", archive],
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, encoding="utf-8", errors="replace", timeout=300, check=False)
+    if listing.returncode != 0:
+        raise ValueError("RAR metadata check failed: " + listing.stdout.strip()[-300:])
+    records, listed_total = _parse_7z_listing(listing.stdout)
+    os.makedirs(destination)
+    try:
+        extracted = subprocess.run(
+            [SEVEN_ZIP, "x", "-y", "-sccUTF-8", "-o" + destination, "--", archive],
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", timeout=21600, check=False)
+        if extracted.returncode != 0:
+            raise ValueError("RAR extraction failed: " + extracted.stdout.strip()[-300:])
+        files = 0
+        actual_total = 0
+        for current, directories, filenames in os.walk(destination, followlinks=False):
+            for name in directories + filenames:
+                path = os.path.join(current, name)
+                if stat.S_ISLNK(os.lstat(path).st_mode):
+                    raise ValueError("Archive extracted a symbolic link.")
+                real = os.path.realpath(path)
+                if not real.startswith(destination + os.sep):
+                    raise ValueError("Archive contains an unsafe path.")
+            for name in filenames:
+                files += 1
+                actual_total += os.path.getsize(os.path.join(current, name))
+                if actual_total > MAX_EXTRACTED_BYTES:
+                    raise ValueError("Archive expands beyond the 10 GiB safety limit.")
+        expected_files = sum(record.get("Folder") != "+" for record in records)
+        if files != expected_files or actual_total != listed_total:
+            raise ValueError("RAR extraction did not match its validated contents.")
+        return files, actual_total
+    except Exception:
+        shutil.rmtree(destination, ignore_errors=True)
+        raise
+
+
+def _extract_beside_archive(archive, extractor):
     parent = os.path.dirname(archive)
     staging = os.path.join(parent, ".lan-batocera-extract-" + uuid.uuid4().hex)
     moved = []
     try:
-        files, total = _extract_to_new_directory(archive, staging)
+        files, total = extractor(archive, staging)
         names = os.listdir(staging)
         collisions = [name for name in names if os.path.exists(os.path.join(parent, name))]
         if collisions:
@@ -109,6 +203,19 @@ def _extract_zip_beside_archive(archive):
         shutil.rmtree(staging, ignore_errors=True)
 
 
+def _extract_zip_beside_archive(archive):
+    return _extract_beside_archive(archive, _extract_to_new_directory)
+
+
+def _extract_archive_beside_archive(archive):
+    extension = os.path.splitext(archive)[1].lower()
+    if extension == ".zip":
+        return _extract_beside_archive(archive, _extract_to_new_directory)
+    if extension == ".rar":
+        return _extract_beside_archive(archive, _extract_rar_to_new_directory)
+    raise ValueError("Unsupported archive type.")
+
+
 def _run_auto_extract(job_id, directory):
     global ACTIVE_EXTRACT_JOB
     with EXTRACT_JOBS_LOCK:
@@ -116,7 +223,8 @@ def _run_auto_extract(job_id, directory):
         job["status"] = "running"
     try:
         archives = sorted((entry.path for entry in os.scandir(directory)
-                           if entry.is_file(follow_symlinks=False) and entry.name.lower().endswith(".zip")),
+                           if entry.is_file(follow_symlinks=False) and
+                           os.path.splitext(entry.name)[1].lower() in (".zip", ".rar")),
                           key=lambda value: value.lower())
         with EXTRACT_JOBS_LOCK:
             job["total"] = len(archives)
@@ -124,12 +232,12 @@ def _run_auto_extract(job_id, directory):
             with EXTRACT_JOBS_LOCK:
                 job["current"] = os.path.basename(archive)
             try:
-                files, total = _extract_zip_beside_archive(archive)
+                files, total = _extract_archive_beside_archive(archive)
                 with EXTRACT_JOBS_LOCK:
                     job["completed"] += 1
                     job["files"] += files
                     job["bytes"] += total
-            except (ValueError, zipfile.BadZipFile, OSError) as error:
+            except (ValueError, zipfile.BadZipFile, OSError, subprocess.SubprocessError) as error:
                 with EXTRACT_JOBS_LOCK:
                     job["failed"] += 1
                     job["errors"].append({"archive": os.path.basename(archive),
@@ -228,11 +336,12 @@ class Proxy(BaseHTTPRequestHandler):
             source_name = request.get("source", "")
             root = EXTRACT_ROOTS[source_name]
             archive_relative = str(request.get("archive", "")).strip().strip("/")
-            if not archive_relative.lower().endswith(".zip"):
-                raise ValueError("Select a .zip archive.")
+            extension = os.path.splitext(archive_relative)[1].lower()
+            if extension not in (".zip", ".rar"):
+                raise ValueError("Select a .zip or .rar archive.")
             archive = os.path.realpath(os.path.join(root, archive_relative))
             if not archive.startswith(os.path.realpath(root) + os.sep) or not os.path.isfile(archive):
-                raise ValueError("ZIP archive was not found in the selected storage area.")
+                raise ValueError("Archive was not found in the selected storage area.")
             destination_relative = str(request.get("destination", "")).strip().strip("/")
             if not destination_relative:
                 destination_relative = os.path.join(os.path.dirname(archive_relative),
@@ -243,10 +352,12 @@ class Proxy(BaseHTTPRequestHandler):
             if os.path.exists(destination):
                 self._send_json(409, {"error": "Destination already exists; choose a new folder."})
                 return
-            files, total = _extract_to_new_directory(archive, destination)
+            extractor = _extract_to_new_directory if extension == ".zip" else _extract_rar_to_new_directory
+            files, total = extractor(archive, destination)
             self._send_json(200, {"files": files, "bytes": total,
                                   "destination": destination_relative.replace(os.sep, "/")})
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError, zipfile.BadZipFile, OSError) as error:
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, zipfile.BadZipFile,
+                OSError, subprocess.SubprocessError) as error:
             self._send_json(400, {"error": str(error) or "Extraction failed."})
 
     def _start_auto_extract(self):

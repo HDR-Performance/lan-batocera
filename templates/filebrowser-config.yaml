@@ -40,4 +40,4 @@ frontend:
   externalLinks:
     - text: "Auto Extract"
       url: "/lan-batocera-tools"
-      title: "Extract one ZIP or auto-extract a game directory"
+      title: "Auto-extract ZIP and RAR archives in a game directory"
