@@ -11,7 +11,9 @@ Both services live in Batocera's persistent `/userdata` partition and start with
 Batocera's supported user-service system. The library provides console tiles
 with game counts, console and handheld categories, system filtering, title
 search, per-browser favorites and recently played history, and returns to the
-library after EmulatorJS completes its exit and save cleanup.
+library after EmulatorJS completes its exit and save cleanup. The responsive UI
+uses phone-sized touch targets and bottom navigation, desktop keyboard shortcuts,
+incremental card rendering, and automatic mobile/desktop EmulatorJS controls.
 
 ## Supported hardware
 
