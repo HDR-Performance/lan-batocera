@@ -158,6 +158,11 @@ or EmulatorJS's own exited state before releasing the emulator instance
 and returning to the library. If closure is not confirmed, the page stays open
 and reports the failure instead of claiming the game stopped.
 
+After EmulatorJS reports that a newly selected game has started, LAN Batocera
+performs one guarded restart through EmulatorJS's own **Restart** control. This
+applies to every configured console core, including Nintendo 64 and Super
+Nintendo, and cannot repeat in a loop during the same launch.
+
 ## Remove
 
 ```bash

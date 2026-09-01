@@ -39,6 +39,16 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("/api/session-stop", page)
         self.assertIn("X-LAN-Batocera-Action", page)
 
+    def test_every_core_gets_one_guarded_startup_restart(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn("window.EJS_onGameStart=prepareStartedGame", page)
+        self.assertIn("document.body.append(loader);prepareStartedGame()", page)
+        self.assertIn("startupRestartState!=='pending'", page)
+        self.assertIn("waitForMenuButton('Restart')", page)
+        self.assertIn("restart.click()", page)
+        self.assertIn("dataset.startupRestart='complete'", page)
+
 
 if __name__ == "__main__":
     unittest.main()
