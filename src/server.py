@@ -20,6 +20,9 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 WEB_ROOT = "/userdata/system/emulatorjs-lan/web"
 ROMS_ROOT = "/userdata/roms"
 PORT = 8080
+MODULE_ROOT = os.path.dirname(os.path.realpath(__file__))
+VERSION_FILES = (os.path.join(MODULE_ROOT, "VERSION"),
+                 os.path.join(MODULE_ROOT, "..", "VERSION"))
 STATE_ROOT = "/userdata/saves/lan-batocera-states"
 BATOCERA_SAVES_ROOT = "/userdata/saves"
 MAX_STATE_BYTES = 64 * 1024 * 1024
@@ -29,6 +32,11 @@ NATIVE_STATE_SYSTEMS = {"nes", "snes", "gb", "gbc", "gba", "megadrive", "sega32x
 NATIVE_EMULATOR_MARKERS = ("/retroarch", "/mupen64plus", "/ppsspp", "/pcsx2",
                            "/dolphin-emu", "/duckstation", "/rpcs3", "/xemu", "/cemu")
 ARTWORK_MAX_BYTES = 8 * 1024 * 1024
+ARTWORK_CATALOG_MAX_BYTES = 16 * 1024 * 1024
+ARTWORK_CATALOG_TIMEOUT_SECONDS = 30
+ARTWORK_DOWNLOAD_TIMEOUT_SECONDS = 20
+ARTWORK_JOB_LIMIT = 10000
+ARTWORK_REQUEST_DELAY_SECONDS = 0.1
 ARTWORK_USER_AGENT = "LAN-Batocera/1.0 (+https://github.com/HDR-Performance/lan-batocera)"
 ARTWORK_REPOSITORIES = {
     "atari2600": "Atari_-_2600", "atari7800": "Atari_-_7800", "lynx": "Atari_-_Lynx",
@@ -43,6 +51,18 @@ ARTWORK_REPOSITORIES = {
 }
 ARTWORK_JOB = None
 ARTWORK_LOCK = threading.Lock()
+
+
+def project_version() -> str:
+    for version_path in VERSION_FILES:
+        try:
+            with open(version_path, encoding="utf-8") as version_file:
+                version = version_file.read().strip()
+        except OSError:
+            continue
+        if version:
+            return version
+    return "development"
 
 SYSTEMS = {
     "nes": ("nes", "Nintendo Entertainment System", "Console", {".nes", ".zip"}),
@@ -153,7 +173,7 @@ def artwork_name_candidates(name):
     return result
 
 
-def artwork_title_key(name):
+def artwork_title_key(name: str) -> str:
     title = os.path.splitext(os.path.basename(name))[0]
     title = re.sub(r"\s*#\s*(N64|SNES|NES|GBA|GBC|GB|32X|MD|SMS|GG)\s*$", "", title,
                    flags=re.IGNORECASE)
@@ -176,11 +196,11 @@ class _ArtworkListingParser(html.parser.HTMLParser):
             self.names.append(os.path.splitext(name)[0])
 
 
-def artwork_catalog(repository, opener=urllib.request.urlopen):
+def artwork_catalog(repository: str, opener=urllib.request.urlopen) -> dict[str, str]:
     url = "https://thumbnails.libretro.com/" + urllib.parse.quote(repository.replace("_", " ")) + "/Named_Boxarts/"
     request = urllib.request.Request(url, headers={"User-Agent": ARTWORK_USER_AGENT})
-    with opener(request, timeout=30) as response:
-        data = response.read(16 * 1024 * 1024)
+    with opener(request, timeout=ARTWORK_CATALOG_TIMEOUT_SECONDS) as response:
+        data = response.read(ARTWORK_CATALOG_MAX_BYTES)
     parser = _ArtworkListingParser()
     parser.feed(data.decode("utf-8", "replace"))
     choices = {}
@@ -195,14 +215,15 @@ def artwork_catalog(repository, opener=urllib.request.urlopen):
     return {key: value[1] for key, value in choices.items()}
 
 
-def _download_artwork(repository, candidates, opener=urllib.request.urlopen):
+def _download_artwork(repository: str, candidates: list[str],
+                      opener=urllib.request.urlopen) -> tuple[bytes | None, str, str]:
     for candidate in candidates:
         encoded = urllib.parse.quote(candidate + ".png", safe="'(),!$-._~")
         url = (f"https://raw.githubusercontent.com/libretro-thumbnails/{repository}/master/"
                f"Named_Boxarts/{encoded}")
         request = urllib.request.Request(url, headers={"User-Agent": ARTWORK_USER_AGENT})
         try:
-            with opener(request, timeout=20) as response:
+            with opener(request, timeout=ARTWORK_DOWNLOAD_TIMEOUT_SECONDS) as response:
                 length = int(response.headers.get("Content-Length", "0") or 0)
                 if length > ARTWORK_MAX_BYTES:
                     continue
@@ -294,7 +315,7 @@ def _artwork_worker(job, system, limit):
                 job["missing"] += 1
             job["processed"] += 1
             job["updated"] = int(time.time() * 1000)
-            time.sleep(0.1)
+            time.sleep(ARTWORK_REQUEST_DELAY_SECONDS)
         if additions:
             _write_gamelist(system, additions)
         if job["status"] != "cancelled":
@@ -315,7 +336,7 @@ def start_artwork_job(system, limit=0):
         raise ValueError("That console directory is not available.")
     if native_game_status()["nativeGameRunning"]:
         raise RuntimeError("Stop the HDMI game before fetching artwork.")
-    limit = max(0, min(int(limit or 0), 10000))
+    limit = max(0, min(int(limit or 0), ARTWORK_JOB_LIMIT))
     with ARTWORK_LOCK:
         if ARTWORK_JOB and ARTWORK_JOB.get("status") in {"queued", "running"}:
             raise RuntimeError("Another artwork job is already running.")
@@ -552,6 +573,9 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
             self.wfile.write(payload)
+            return
+        if parsed.path == "/api/version":
+            self._json_response(200, {"version": project_version()})
             return
         if parsed.path == "/api/session-status":
             payload = json.dumps(native_game_status()).encode()

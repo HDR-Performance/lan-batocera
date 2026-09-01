@@ -1,5 +1,8 @@
 # LAN Batocera
 
+Current release: **v1.0.0**. Releases follow Semantic Versioning; contribution
+and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 LAN Batocera adds two local-network web services to a Batocera device:
 
 - A browser-playable ROM library at <http://batocera.local:8080>

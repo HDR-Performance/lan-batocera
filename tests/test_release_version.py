@@ -1,0 +1,24 @@
+import os
+import re
+import unittest
+
+
+REPOSITORY_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+SEMANTIC_VERSION_PATTERN = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+
+
+class ReleaseVersionTests(unittest.TestCase):
+    def test_version_file_contains_semantic_version(self):
+        with open(os.path.join(REPOSITORY_ROOT, "VERSION"), encoding="utf-8") as version_file:
+            version = version_file.read().strip()
+        self.assertRegex(version, SEMANTIC_VERSION_PATTERN)
+
+    def test_installer_copies_and_reports_version(self):
+        with open(os.path.join(REPOSITORY_ROOT, "install.sh"), encoding="utf-8") as installer_file:
+            installer = installer_file.read()
+        self.assertIn('install -m 0644 "$APP_ROOT/VERSION" "$ARCADE_ROOT/VERSION"', installer)
+        self.assertIn('LAN Batocera version:', installer)
+
+
+if __name__ == "__main__":
+    unittest.main()

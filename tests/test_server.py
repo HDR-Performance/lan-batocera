@@ -13,6 +13,9 @@ SPEC.loader.exec_module(server)
 
 
 class ArcadeScannerTests(unittest.TestCase):
+    def test_project_version_is_semantic(self):
+        self.assertRegex(server.project_version(), r"^\d+\.\d+\.\d+$")
+
     def test_scans_sega32x_zip_with_correct_emulatorjs_core(self):
         with tempfile.TemporaryDirectory() as roms:
             folder = os.path.join(roms, "sega32x")

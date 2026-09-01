@@ -14,6 +14,7 @@ if [ "$(uname -m)" != "aarch64" ]; then echo "This release currently supports aa
 
 mkdir -p "$ARCADE_ROOT/web" "$FB_ROOT/cache" "$SERVICE_ROOT" /userdata/system/logs
 install -m 0755 "$APP_ROOT/src/server.py" "$ARCADE_ROOT/server.py"
+install -m 0644 "$APP_ROOT/VERSION" "$ARCADE_ROOT/VERSION"
 install -m 0755 "$APP_ROOT/src/upload_proxy.py" "$FB_ROOT/upload_proxy.py"
 install -m 0644 "$APP_ROOT/web/index.html" "$ARCADE_ROOT/web/index.html"
 install -m 0644 "$APP_ROOT/web/play.html" "$ARCADE_ROOT/web/play.html"
@@ -55,4 +56,5 @@ echo "Arcade:      http://${IP_ADDRESS}:8080"
 echo "File manager: http://${IP_ADDRESS}:8081"
 echo "Friendly arcade address: http://batocera.local:8080"
 echo "Friendly ROM address:    http://batoceraroms.local:8081"
+echo "LAN Batocera version:     $(cat "$APP_ROOT/VERSION")"
 echo "Installation complete."
