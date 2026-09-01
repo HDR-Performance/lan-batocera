@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.1.0**. Releases follow Semantic Versioning; contribution
+Current release: **v1.2.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -88,6 +88,18 @@ tar -xzf /tmp/lan-batocera.tar.gz -C /userdata/system/lan-batocera --strip-compo
 cd /userdata/system/lan-batocera
 chmod +x install.sh uninstall.sh
 ./install.sh
+```
+
+For an existing Batocera installation, the version-pinned standalone LAN
+feature installer downloads and runs the same reviewed release without requiring
+a manual repository checkout. It adds LAN Batocera; it does not install,
+replace, or re-image the Batocera operating system:
+
+```bash
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.2.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
+less /tmp/lan-batocera-install.sh
+chmod +x /tmp/lan-batocera-install.sh
+/tmp/lan-batocera-install.sh
 ```
 
 The file manager's first login is `Batocera` / `Batocera`. Change both from the
@@ -185,6 +197,19 @@ The current arcade loads the stable EmulatorJS engine from its public CDN, so th
 client browser needs internet access when starting a game. ROM data is served by
 the Batocera device over the LAN. Controllers connect to the browser device, and
 browser saves are separate from Batocera's native emulator saves.
+
+The **Controllers** menu provides pre-mapped Xbox, PlayStation, and Nintendo
+Switch layouts. A selection is saved in that browser and applied before
+EmulatorJS starts. On phones, **Touch / Browser Default** keeps EmulatorJS's
+virtual touch gamepad enabled. A Bluetooth controller paired to the phone can
+use any preset; some mobile browsers expose it only after a button is pressed,
+so the manual selector remains available even when automatic detection reports
+no controller. EmulatorJS's in-game controller settings remain available for
+unusual or third-party pads.
+
+The default **Neon Arcade** theme is joined by Classic Dark and Pixel Purple.
+The **Themes** menu also includes a validated eight-color custom theme builder.
+Theme choices are stored per browser and do not alter Batocera's HDMI theme.
 LAN games run in the visiting phone or PC browser, not as emulator processes on
 the Batocera host. When leaving a game, the page activates EmulatorJS's own
 **Exit Emulation** control and waits for the documented `EJS_onExit` callback
