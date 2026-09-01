@@ -49,6 +49,13 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("restart.click()", page)
         self.assertIn("dataset.startupRestart='complete'", page)
 
+    def test_desktop_defaults_to_hq_scaling_with_mobile_native_fallback(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn("coarsePointer?'disabled':'2xScaleHQ.glslp'", page)
+        self.assertIn("window.EJS_defaultOptions={shader:defaultShader}", page)
+        self.assertIn("Video: 2× HQ", page)
+
 
 if __name__ == "__main__":
     unittest.main()

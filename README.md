@@ -23,6 +23,12 @@ search, per-browser favorites and recently played history, and returns to the
 library after EmulatorJS completes its exit and save cleanup. The responsive UI
 uses phone-sized touch targets and bottom navigation, desktop keyboard shortcuts,
 incremental card rendering, and automatic mobile/desktop EmulatorJS controls.
+Desktop browsers default to EmulatorJS's **2xScaleHQ** GPU shader for a cleaner
+scaled image. Phones default to native filtering to protect battery life and
+frame rate. During play, open EmulatorJS's gear menu and change **Shader** to
+Disabled, 2xScaleHQ, or 4xScaleHQ according to the client device's GPU. This
+filters the locally rendered frame; it does not add detail to original ROM
+textures or make the Raspberry Pi perform the emulation.
 Sega 32X libraries are scanned from `/userdata/roms/sega32x` and launched with
 EmulatorJS's PicoDrive-backed `sega32x` core. ZIP and 7z containers are supported
 alongside raw `.32x`, `.smd`, `.bin`, and `.md` ROMs.
