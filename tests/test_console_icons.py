@@ -21,6 +21,12 @@ class ConsoleIconTests(unittest.TestCase):
         self.assertIn("button.setAttribute('aria-label'", self.index)
         self.assertIn('class="console-icon" aria-hidden="true"', self.index)
 
+    def test_all_and_console_views_have_touch_friendly_alphabet_filter(self):
+        self.assertIn('id="alphabet"', self.index)
+        self.assertIn("...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'", self.index)
+        self.assertIn("firstGroup(game.name)===activeLetter", self.index)
+        self.assertIn("view!=='all'", self.index)
+
 
 if __name__ == "__main__":
     unittest.main()
