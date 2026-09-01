@@ -167,7 +167,8 @@ browsers do not automatically select different HTTP ports from those names.
 
 The file manager accepts multi-file selection and drag-and-drop, runs up to four
 uploads concurrently, and uses 50 MB chunks for large transfers. The browser
-queue is uncapped and is intended to accept batches of up to 5,000 files;
+queue accepts a complete folder containing up to 10,000 files while preserving
+its nested directory structure;
 transfers beyond the four active slots wait in the browser. ROM search indexing
 is disabled to prevent large uploads from saturating low-memory Pi hardware while
 ordinary folder browsing remains available. A local upload guard rejects

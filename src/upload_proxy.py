@@ -19,6 +19,7 @@ LISTEN_PORT = 8081
 BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = 8082
 MAX_FILE_BYTES = 1024 * 1024 * 1024
+MAX_FOLDER_UPLOAD_FILES = 10000
 MAX_EXTRACTED_BYTES = 10 * 1024 * 1024 * 1024
 MAX_ARCHIVE_ENTRIES = 50000
 SEVEN_ZIP = "/usr/bin/7z"
@@ -49,6 +50,9 @@ EXTRACT_JOBS_LOCK = threading.Lock()
 ACTIVE_EXTRACT_JOB = None
 
 FILEBROWSER_JS_PATCHES = (
+    (b'async add(e,n,i=!1){if(e||(e="/"),',
+     b'async add(e,n,i=!1){if(n.length>' + str(MAX_FOLDER_UPLOAD_FILES).encode() +
+     b'){yt.showError("A folder upload can contain up to 10,000 files. Split larger folders into separate uploads.");return[]}if(e||(e="/"),'),
     (b'uploadSettingsDescription(){const t=L.user.fileLoading?.maxConcurrentUpload,e=L.user.fileLoading?.uploadChunkSizeMb;',
      b'uploadSettingsDescription(){const t=Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4),e=L.user.fileLoading?.uploadChunkSizeMb;'),
     (b'const u=Gr(L.user.fileLoading?.maxConcurrentUpload),d=Gr(L.user.fileLoading?.uploadChunkSizeMb)',
@@ -106,7 +110,7 @@ def _patch_file_type_sort(path, body):
 
 def _version_filebrowser_html(body):
     pattern = rb'(/public/static/assets/index-[^"\' ?]+\.js)(["\'])'
-    updated, count = re.subn(pattern, rb'\1?lan-batocera-ui=4\2', body, count=1)
+    updated, count = re.subn(pattern, rb'\1?lan-batocera-ui=5\2', body, count=1)
     return updated, count == 1
 
 

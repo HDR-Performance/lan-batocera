@@ -8,6 +8,7 @@ import zipfile
 
 
 MODULE_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "upload_proxy.py")
+REPOSITORY_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 SPEC = importlib.util.spec_from_file_location("upload_proxy", MODULE_PATH)
 proxy = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(proxy)
@@ -35,6 +36,8 @@ class AutoExtractTests(unittest.TestCase):
             "/public/static/assets/index-upload.js", fixture)
         self.assertTrue(changed)
         self.assertIn(b"Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4)", patched)
+        self.assertIn(b"n.length>10000", patched)
+        self.assertIn(b"up to 10,000 files", patched)
         self.assertIn(b"ui(()=>[...zs.queue].reverse())", patched)
         self.assertIn(b"this.PROGRESS_TIMEOUT_MS=12e4", patched)
         self.assertIn(b"this.isOverallPaused=!0,this.pause(e.id)", patched)
@@ -42,7 +45,13 @@ class AutoExtractTests(unittest.TestCase):
         self.assertIn(b'max:"4"', patched)
         self.assertIn(b"overallProgress:P", patched)
         self.assertIn(b"Overall upload: ", patched)
-        self.assertIn(b"Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4)", patched)
+
+    def test_folder_upload_limit_is_explicit_and_matches_documentation(self):
+        readme = os.path.join(REPOSITORY_ROOT, "README.md")
+        with open(readme, encoding="utf-8") as readme_file:
+            documentation = readme_file.read()
+        self.assertEqual(proxy.MAX_FOLDER_UPLOAD_FILES, 10000)
+        self.assertIn("up to 10,000 files", documentation)
 
     def test_unrecognized_frontend_asset_is_not_modified(self):
         original = b"console.log('different version')"
@@ -71,7 +80,7 @@ class AutoExtractTests(unittest.TestCase):
         html = b'<script type="module" src="/public/static/assets/index-test.js"></script>'
         versioned, changed = proxy._version_filebrowser_html(html)
         self.assertTrue(changed)
-        self.assertIn(b'index-test.js?lan-batocera-ui=4"', versioned)
+        self.assertIn(b'index-test.js?lan-batocera-ui=5"', versioned)
 
     def test_resource_listing_reports_recursive_folder_data_sizes(self):
         with tempfile.TemporaryDirectory() as root:
