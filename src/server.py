@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import base64
 import hashlib
+import html.parser
 import json
 import mimetypes
 import os
@@ -138,6 +139,48 @@ def artwork_name_candidates(name):
     return result
 
 
+def artwork_title_key(name):
+    title = os.path.splitext(os.path.basename(name))[0]
+    title = re.sub(r"\s*#\s*(N64|SNES|NES|GBA|GBC|GB|32X|MD|SMS|GG)\s*$", "", title,
+                   flags=re.IGNORECASE)
+    title = re.sub(r"^\d{3,4}\s*-\s*", "", title)
+    title = re.sub(r"\s*[\[(].*?[\])]", "", title)
+    return re.sub(r"[^a-z0-9]+", "", title.casefold())
+
+
+class _ArtworkListingParser(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.names = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "a":
+            return
+        href = dict(attrs).get("href", "")
+        name = urllib.parse.unquote(href.rsplit("/", 1)[-1])
+        if name.lower().endswith(".png"):
+            self.names.append(os.path.splitext(name)[0])
+
+
+def artwork_catalog(repository, opener=urllib.request.urlopen):
+    url = "https://thumbnails.libretro.com/" + urllib.parse.quote(repository.replace("_", " ")) + "/Named_Boxarts/"
+    request = urllib.request.Request(url, headers={"User-Agent": ARTWORK_USER_AGENT})
+    with opener(request, timeout=30) as response:
+        data = response.read(16 * 1024 * 1024)
+    parser = _ArtworkListingParser()
+    parser.feed(data.decode("utf-8", "replace"))
+    choices = {}
+    for name in parser.names:
+        key = artwork_title_key(name)
+        if not key:
+            continue
+        rank = (0 if "(USA" in name else 1 if "(World" in name else
+                2 if "(Europe" in name else 3 if "(Japan" in name else 4)
+        if key not in choices or rank < choices[key][0]:
+            choices[key] = (rank, name)
+    return {key: value[1] for key, value in choices.items()}
+
+
 def _download_artwork(repository, candidates, opener=urllib.request.urlopen):
     for candidate in candidates:
         encoded = urllib.parse.quote(candidate + ".png", safe="'(),!$-._~")
@@ -211,13 +254,18 @@ def _artwork_worker(job, system, limit):
     image_folder = os.path.join(folder, "images")
     os.makedirs(image_folder, exist_ok=True)
     try:
+        catalog = artwork_catalog(repository)
         for rom_path in targets:
             if job.get("cancel"):
                 job["status"] = "cancelled"
                 break
             display_name = os.path.splitext(os.path.basename(rom_path))[0]
             job["current"] = display_name
-            data, matched, _url = _download_artwork(repository, artwork_name_candidates(display_name))
+            candidates = artwork_name_candidates(display_name)
+            catalog_match = catalog.get(artwork_title_key(display_name))
+            if catalog_match:
+                candidates.insert(0, catalog_match)
+            data, matched, _url = _download_artwork(repository, candidates)
             if data:
                 image_name = "lan-" + hashlib.sha1(os.path.relpath(rom_path, folder).encode()).hexdigest() + ".png"
                 image_relative = os.path.join("images", image_name)

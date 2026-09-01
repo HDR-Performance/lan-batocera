@@ -33,6 +33,17 @@ class ArtworkTests(unittest.TestCase):
         self.assertIn("Super Mario Advance (USA)", candidates)
         self.assertIn("Super Mario Advance", candidates)
 
+    def test_title_key_matches_collection_suffix_to_regional_catalog_name(self):
+        self.assertEqual(server.artwork_title_key("Banjo-Kazooie # N64.Z64"),
+                         server.artwork_title_key("Banjo-Kazooie (USA).png"))
+
+    def test_catalog_prefers_usa_when_multiple_regions_share_title(self):
+        listing = (b'<a href="Banjo-Kazooie%20(Europe).png">EU</a>'
+                   b'<a href="Banjo-Kazooie%20(USA).png">US</a>')
+        catalog = server.artwork_catalog("Nintendo_-_Nintendo_64",
+                                         lambda _request, timeout: FakeResponse(listing))
+        self.assertEqual(catalog["banjokazooie"], "Banjo-Kazooie (USA)")
+
     def test_download_validates_png_and_encodes_filename(self):
         png = b"\x89PNG\r\n\x1a\nfixture"
         seen = []
@@ -81,7 +92,8 @@ class ArtworkTests(unittest.TestCase):
             job = {"status": "queued", "cancel": False}
             png = b"\x89PNG\r\n\x1a\nfixture"
             try:
-                with mock.patch.object(server, "_download_artwork", return_value=(png, "Game (USA)", "url")), \
+                with mock.patch.object(server, "artwork_catalog", return_value={"game": "Game (USA)"}), \
+                        mock.patch.object(server, "_download_artwork", return_value=(png, "Game (USA)", "url")), \
                         mock.patch.object(server.time, "sleep"):
                     server._artwork_worker(job, "snes", 10)
                 self.assertEqual(job["status"], "complete")
