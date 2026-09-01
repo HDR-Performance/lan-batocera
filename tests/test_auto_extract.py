@@ -39,6 +39,9 @@ class AutoExtractTests(unittest.TestCase):
         self.assertIn(b"this.isOverallPaused=!0,this.pause(e.id)", patched)
         self.assertIn(b"QH().then(r=>ae.updateSourceInfo(r))", patched)
         self.assertIn(b'max:"4"', patched)
+        self.assertIn(b"overallProgress:P", patched)
+        self.assertIn(b"Overall upload: ", patched)
+        self.assertIn(b"Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4)", patched)
 
     def test_unrecognized_frontend_asset_is_not_modified(self):
         original = b"console.log('different version')"
@@ -59,7 +62,7 @@ class AutoExtractTests(unittest.TestCase):
         html = b'<script type="module" src="/public/static/assets/index-test.js"></script>'
         versioned, changed = proxy._version_filebrowser_html(html)
         self.assertTrue(changed)
-        self.assertIn(b'index-test.js?lan-batocera-upload-fifo=2"', versioned)
+        self.assertIn(b'index-test.js?lan-batocera-upload-progress=3"', versioned)
 
     def test_current_file_manager_directory_becomes_auto_extract_context(self):
         context = proxy._directory_from_referer(

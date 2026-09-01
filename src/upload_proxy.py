@@ -43,6 +43,10 @@ EXTRACT_JOBS_LOCK = threading.Lock()
 ACTIVE_EXTRACT_JOB = None
 
 FILEBROWSER_JS_PATCHES = (
+    (b'uploadSettingsDescription(){const t=L.user.fileLoading?.maxConcurrentUpload,e=L.user.fileLoading?.uploadChunkSizeMb;',
+     b'uploadSettingsDescription(){const t=Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4),e=L.user.fileLoading?.uploadChunkSizeMb;'),
+    (b'const u=Gr(L.user.fileLoading?.maxConcurrentUpload),d=Gr(L.user.fileLoading?.uploadChunkSizeMb)',
+     b'const u=Gr(Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4)),d=Gr(L.user.fileLoading?.uploadChunkSizeMb)'),
     (b'modifiedSorted(){return be.sorting().by==="modified"},durationSorted()',
      b'modifiedSorted(){return be.sorting().by==="modified"},typeSorted(){return be.sorting().by==="type"},durationSorted()'),
     (b'modifiedIcon(){return this.modifiedSorted&&this.ascOrdered?"arrow_downward":"arrow_upward"},durationIcon()',
@@ -55,6 +59,12 @@ FILEBROWSER_JS_PATCHES = (
     (b'const e=L.user.fileLoading?.maxConcurrentUpload||3;',
      b'const e=Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4);'),
     (b'r=ui(()=>zs.queue),a=Gr(!1)', b'r=ui(()=>[...zs.queue].reverse()),a=Gr(!1)'),
+    (b'const T=ui(()=>r.value.some(oe=>oe.status==="completed"))',
+     b'const P=ui(()=>{const oe=r.value.filter(F=>F.type!=="directory"),F=oe.length,he=oe.filter(U=>U.status==="completed").length,ge=oe.reduce((U,Z)=>U+(Z.size||0),0),U=oe.reduce((Z,Ve)=>Z+(Ve.status==="completed"?(Ve.size||0):Math.min(Ve.size||0,(Ve.progress||0)/100*(Ve.size||0))),0);return{percent:ge?Math.min(100,Math.round(U/ge*100)):0,completed:he,total:F}}),T=ui(()=>r.value.some(oe=>oe.status==="completed"))'),
+    (b'clearCompleted:A,hasCompleted:T,hasClearable:C,showConflictPrompt:o,',
+     b'clearCompleted:A,overallProgress:P,hasCompleted:T,hasClearable:C,showConflictPrompt:o,'),
+    (b'],34)]),i.files.length>0?(H(),J("div",Nhe,',
+     b'],34)]),i.files.length>0?(H(),J("div",{key:"lan-overall-progress",style:{padding:"10px 12px 4px"}},[M("p",{style:{margin:"0 0 6px","font-size":".9rem","font-weight":"600"}},"Overall upload: "+j(i.overallProgress.percent)+"% - "+j(i.overallProgress.completed)+" of "+j(i.overallProgress.total)+" files complete",1),ft(l,{val:i.overallProgress.percent,unit:"%",max:100,status:i.overallProgress.percent>=100?"completed":"uploading","text-position":"inside",size:"14"},null,8,["val","status"])])):Me("",!0),i.files.length>0?(H(),J("div",Nhe,'),
     (b'e.connectionIssue=!0,this.pause(e.id),e.errorDetails="Connection stalled - upload paused. Click resume to retry."',
      b'e.connectionIssue=!0,this.isOverallPaused=!0,this.pause(e.id),e.errorDetails="Connection stalled - queue paused. Resume to retry this file before continuing."'),
     (b'this.queue.some(r=>r.status==="error"||r.status==="conflict")||ae.setReload(!0),this.hadActiveUploads=!1',
@@ -78,7 +88,7 @@ def _patch_file_type_sort(path, body):
 
 def _version_filebrowser_html(body):
     pattern = rb'(/public/static/assets/index-[^"\' ?]+\.js)(["\'])'
-    updated, count = re.subn(pattern, rb'\1?lan-batocera-upload-fifo=2\2', body, count=1)
+    updated, count = re.subn(pattern, rb'\1?lan-batocera-upload-progress=3\2', body, count=1)
     return updated, count == 1
 
 
