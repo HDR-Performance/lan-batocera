@@ -81,6 +81,31 @@ class ArtworkTests(unittest.TestCase):
             finally:
                 server.ROMS_ROOT = original
 
+    def test_library_uses_batocera_name_and_existing_cover_art(self):
+        original = server.ROMS_ROOT
+        with tempfile.TemporaryDirectory() as roms:
+            server.ROMS_ROOT = roms
+            folder = os.path.join(roms, "n64")
+            os.makedirs(os.path.join(folder, "images"))
+            rom = os.path.join(folder, "Legend of Zelda # N64.Z64")
+            image = os.path.join(folder, "images", "zelda.png")
+            with open(rom, "wb") as output:
+                output.write(b"rom")
+            with open(image, "wb") as output:
+                output.write(b"\x89PNG\r\n\x1a\nfixture")
+            with open(os.path.join(folder, "gamelist.xml"), "w", encoding="utf-8") as output:
+                output.write("<?xml version='1.0'?><gameList><game>"
+                             "<path>./Legend of Zelda # N64.Z64</path>"
+                             "<name>The Legend of Zelda: Ocarina of Time</name>"
+                             "<image>./images/zelda.png</image>"
+                             "</game></gameList>")
+            try:
+                listing = server.games()
+                self.assertEqual(listing[0]["name"], "The Legend of Zelda: Ocarina of Time")
+                self.assertEqual(listing[0]["image"], "n64/images/zelda.png")
+            finally:
+                server.ROMS_ROOT = original
+
     def test_worker_writes_art_and_marks_job_complete(self):
         original = server.ROMS_ROOT
         with tempfile.TemporaryDirectory() as roms:

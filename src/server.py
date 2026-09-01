@@ -79,17 +79,19 @@ def games():
         folder = os.path.join(ROMS_ROOT, system)
         if not os.path.isdir(folder):
             continue
-        artwork = gamelist_artwork(system)
+        metadata = gamelist_metadata(system)
         for base, _, files in os.walk(folder):
             for filename in files:
                 if os.path.splitext(filename)[1].lower() not in extensions:
                     continue
                 full = os.path.join(base, filename)
                 relative = os.path.relpath(full, ROMS_ROOT).replace(os.sep, "/")
-                item = {"name": os.path.splitext(filename)[0], "system": system,
+                details = metadata.get(os.path.realpath(full), {})
+                display_name = str(details.get("name", "")).strip() or os.path.splitext(filename)[0]
+                item = {"name": display_name, "system": system,
                         "systemName": system_name, "category": category,
                         "core": core, "path": relative}
-                image = artwork.get(os.path.realpath(full))
+                image = details.get("image")
                 if image and os.path.isfile(os.path.join(folder, image)):
                     item["image"] = f"{system}/{image.replace(os.sep, '/')}"
                 result.append(item)
@@ -97,7 +99,7 @@ def games():
                                             game["name"].lower()))
 
 
-def gamelist_artwork(system):
+def gamelist_metadata(system):
     folder = os.path.join(ROMS_ROOT, system)
     filename = os.path.join(folder, "gamelist.xml")
     if not os.path.isfile(filename):
@@ -108,14 +110,26 @@ def gamelist_artwork(system):
         return {}
     result = {}
     for game in root.findall("game"):
-        path, image = game.findtext("path"), game.findtext("image")
-        if not path or not image:
+        path = game.findtext("path")
+        if not path:
             continue
         full = os.path.realpath(os.path.join(folder, path))
-        media = os.path.normpath(image[2:] if image.startswith("./") else image)
-        if not media.startswith(".." + os.sep) and media != "..":
-            result[full] = media
+        details = {}
+        name = game.findtext("name")
+        if name and name.strip():
+            details["name"] = name.strip()
+        image = game.findtext("image")
+        if image:
+            media = os.path.normpath(image[2:] if image.startswith("./") else image)
+            if not media.startswith(".." + os.sep) and media != "..":
+                details["image"] = media
+        result[full] = details
     return result
+
+
+def gamelist_artwork(system):
+    return {path: details["image"] for path, details in gamelist_metadata(system).items()
+            if details.get("image")}
 
 
 def artwork_name_candidates(name):

@@ -40,6 +40,10 @@ can be cancelled, and never replaces existing artwork. Successful matches are
 stored in that console's `images` directory and written to its `gamelist.xml`,
 so they are available in both LAN Batocera and Batocera's HDMI interface. The
 first metadata change creates a `gamelist.xml.lan-batocera.bak` backup.
+The LAN library reads each entry's `<name>` and `<image>` fields, so proper game
+titles and cover art created by Batocera's scraper or LAN Batocera's artwork
+fetcher appear through the same interface. ROM filenames remain the fallback
+when an entry has no display name.
 If EmulationStation is already open on HDMI, use **Main Menu → Game Settings →
 Update Games Lists** after the fetch finishes; the web feature does not restart
 EmulationStation or interrupt someone using the television.
