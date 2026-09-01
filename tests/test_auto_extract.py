@@ -1,5 +1,6 @@
 import importlib.util
 import gzip
+import json
 import os
 import tempfile
 import unittest
@@ -63,6 +64,30 @@ class AutoExtractTests(unittest.TestCase):
         versioned, changed = proxy._version_filebrowser_html(html)
         self.assertTrue(changed)
         self.assertIn(b'index-test.js?lan-batocera-upload-progress=3"', versioned)
+
+    def test_resource_listing_reports_recursive_folder_data_sizes(self):
+        with tempfile.TemporaryDirectory() as root:
+            os.mkdir(os.path.join(root, "snes"))
+            os.mkdir(os.path.join(root, "snes", "covers"))
+            with open(os.path.join(root, "snes", "game.zip"), "wb") as output:
+                output.write(b"g" * 1200)
+            with open(os.path.join(root, "snes", "covers", "game.png"), "wb") as output:
+                output.write(b"p" * 300)
+            original_roots = proxy.SOURCE_ROOTS
+            proxy.SOURCE_ROOTS = {"Games": root}
+            proxy._clear_folder_size_cache()
+            try:
+                body = json.dumps({"size": 4096, "folders": [
+                    {"name": "snes", "size": 4096, "type": "directory"}], "files": []}).encode()
+                patched, changed = proxy._patch_resource_folder_sizes(
+                    "/api/resources?path=%2F&source=Games", body)
+            finally:
+                proxy.SOURCE_ROOTS = original_roots
+                proxy._clear_folder_size_cache()
+            payload = json.loads(patched)
+            self.assertTrue(changed)
+            self.assertEqual(payload["folders"][0]["size"], 1500)
+            self.assertEqual(payload["size"], 1500)
 
     def test_current_file_manager_directory_becomes_auto_extract_context(self):
         context = proxy._directory_from_referer(

@@ -8,6 +8,7 @@ import shutil
 import stat
 import subprocess
 import threading
+import time
 import uuid
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -22,6 +23,11 @@ MAX_EXTRACTED_BYTES = 10 * 1024 * 1024 * 1024
 MAX_ARCHIVE_ENTRIES = 50000
 SEVEN_ZIP = "/usr/bin/7z"
 EXTRACT_ROOTS = {"Games": "/userdata/roms", "BIOS": "/userdata/bios"}
+SOURCE_ROOTS = {"Games": "/userdata/roms", "BIOS": "/userdata/bios",
+                "Saves": "/userdata/saves", "Screenshots": "/userdata/screenshots"}
+FOLDER_SIZE_CACHE_SECONDS = 60
+FOLDER_SIZE_CACHE = {}
+FOLDER_SIZE_CACHE_LOCK = threading.Lock()
 HOP_HEADERS = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
                "te", "trailers", "transfer-encoding", "upgrade", "host"}
 TOOLS_PAGE = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LAN Batocera Archive Tools</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#091018;color:#eef4f7;font:16px system-ui}main{width:min(700px,92vw);margin:5vh auto}a{color:#41d6c3}.card{display:grid;gap:14px;background:#111e27;border:1px solid #29404c;border-radius:14px;padding:20px;margin:18px 0}label{display:grid;gap:6px;font-weight:650}input,select,button{min-height:48px;border:1px solid #29404c;border-radius:9px;background:#172731;color:#fff;padding:10px;font:inherit}button{border-color:#41d6c3;cursor:pointer;font-weight:700}button:disabled{opacity:.55;cursor:wait}small,.result{color:#9eb1bc}.result{white-space:pre-wrap}.ok{color:#41d6c3!important}.error{color:#ff7b72!important}.warning{color:#ffd166}progress{width:100%;height:18px}</style></head><body><main><a href="/">&larr; File Manager</a><h1>Archive tools</h1><section class="card"><h2>Auto Extract Directory</h2><p>Process every ZIP in one game directory, one at a time. Each ZIP is extracted directly into the same directory and deleted only after successful extraction.</p><label>Storage area<select id="autoSource"><option>Games</option><option>BIOS</option></select></label><label>Directory path<input id="autoDirectory" required placeholder="sega32x"><small>Path relative to the selected storage area. Subdirectories are not scanned.</small></label><label><span><input id="confirmDelete" type="checkbox"> Delete each ZIP after its extraction succeeds</span></label><p class="warning">Files are never overwritten. A ZIP that fails or conflicts is kept.</p><button id="autoSubmit">Auto Extract ZIPs</button><progress id="progress" value="0" max="1" hidden></progress><div id="autoResult" class="result"></div></section><section class="card"><h2>Extract One ZIP to a Folder</h2><label>Storage area<select id="source"><option>Games</option><option>BIOS</option></select></label><label>ZIP path<input id="archive" placeholder="snes/my-rom-pack.zip"></label><label>Destination folder (optional)<input id="destination" placeholder="snes/my-rom-pack"><small>Blank creates a folder beside the ZIP using its filename.</small></label><button id="submit">Extract ZIP</button><div id="result" class="result"></div></section></main><script>
@@ -90,6 +96,81 @@ def _version_filebrowser_html(body):
     pattern = rb'(/public/static/assets/index-[^"\' ?]+\.js)(["\'])'
     updated, count = re.subn(pattern, rb'\1?lan-batocera-upload-progress=3\2', body, count=1)
     return updated, count == 1
+
+
+def _clear_folder_size_cache():
+    with FOLDER_SIZE_CACHE_LOCK:
+        FOLDER_SIZE_CACHE.clear()
+
+
+def _recursive_file_size(directory):
+    total = 0
+    for base, directories, files in os.walk(directory, followlinks=False):
+        directories[:] = [name for name in directories
+                          if not os.path.islink(os.path.join(base, name))]
+        for name in files:
+            filename = os.path.join(base, name)
+            try:
+                if not os.path.islink(filename):
+                    total += os.path.getsize(filename)
+            except OSError:
+                continue
+    return total
+
+
+def _directory_sizes(source, relative, folder_names):
+    root = SOURCE_ROOTS.get(source)
+    if root is None:
+        return None
+    try:
+        directory, normalized = _safe_root_path(root, relative, True)
+    except (ValueError, OSError):
+        return None
+    names = tuple(sorted(str(name) for name in folder_names))
+    cache_key = (source, normalized, names)
+    now = time.monotonic()
+    with FOLDER_SIZE_CACHE_LOCK:
+        cached = FOLDER_SIZE_CACHE.get(cache_key)
+        if cached and now - cached[0] < FOLDER_SIZE_CACHE_SECONDS:
+            return cached[1]
+    sizes = {}
+    for name in names:
+        try:
+            child, _unused = _safe_root_path(directory, name, True)
+            sizes[name] = _recursive_file_size(child)
+        except (ValueError, OSError):
+            continue
+    with FOLDER_SIZE_CACHE_LOCK:
+        FOLDER_SIZE_CACHE[cache_key] = (now, sizes)
+    return sizes
+
+
+def _patch_resource_folder_sizes(path, body):
+    parsed = urlsplit(path)
+    if parsed.path != "/api/resources":
+        return body, False
+    from urllib.parse import parse_qs
+    query = parse_qs(parsed.query)
+    source = query.get("source", [""])[0]
+    relative = query.get("path", ["/"])[0]
+    try:
+        payload = json.loads(body)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return body, False
+    folders = payload.get("folders")
+    if not isinstance(folders, list):
+        return body, False
+    sizes = _directory_sizes(source, relative, [item.get("name", "") for item in folders])
+    if sizes is None:
+        return body, False
+    for item in folders:
+        if item.get("name") in sizes:
+            item["size"] = sizes[item["name"]]
+    direct_files = payload.get("files", [])
+    direct_size = sum(item.get("size", 0) for item in direct_files
+                      if isinstance(item, dict) and isinstance(item.get("size", 0), (int, float)))
+    payload["size"] = int(direct_size + sum(sizes.values()))
+    return json.dumps(payload, separators=(",", ":")).encode(), True
 
 
 def _directory_from_referer(referer):
@@ -495,7 +576,9 @@ class Proxy(BaseHTTPRequestHandler):
                    if key.lower() not in HOP_HEADERS}
         is_frontend_script = (self.path.startswith("/public/static/assets/index-") and
                               self.path.split("?", 1)[0].endswith(".js"))
-        if is_frontend_script:
+        is_resource_listing = (self.command == "GET" and
+                               self.path.split("?", 1)[0] == "/api/resources")
+        if is_frontend_script or is_resource_listing:
             headers["Accept-Encoding"] = "identity"
         headers["Host"] = self.headers.get("Host", f"{BACKEND_HOST}:{BACKEND_PORT}")
         connection = http.client.HTTPConnection(BACKEND_HOST, BACKEND_PORT, timeout=300)
@@ -513,7 +596,8 @@ class Proxy(BaseHTTPRequestHandler):
                 remaining -= len(chunk)
             response = connection.getresponse()
             is_frontend_html = "text/html" in response.getheader("Content-Type", "").lower()
-            response_body = response.read() if is_frontend_script or is_frontend_html else None
+            response_body = response.read() if (is_frontend_script or is_frontend_html or
+                                                is_resource_listing) else None
             patched = False
             if response_body is not None:
                 candidate = response_body
@@ -526,6 +610,8 @@ class Proxy(BaseHTTPRequestHandler):
                     candidate, patched = _patch_file_type_sort(self.path.split("?", 1)[0], candidate)
                 elif is_frontend_html:
                     candidate, patched = _version_filebrowser_html(candidate)
+                elif is_resource_listing and response.status == 200:
+                    candidate, patched = _patch_resource_folder_sizes(self.path, candidate)
                 if patched:
                     response_body = candidate
             self.send_response(response.status, response.reason)
@@ -548,6 +634,9 @@ class Proxy(BaseHTTPRequestHandler):
         finally:
             connection.close()
             self.close_connection = True
+            if self.command in {"POST", "PUT", "PATCH", "DELETE"} and (
+                    "/api/resources" in self.path or "/api/tus" in self.path):
+                _clear_folder_size_cache()
 
     def do_GET(self):
         path = self.path.split("?", 1)[0]
