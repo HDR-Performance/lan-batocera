@@ -1,0 +1,37 @@
+name: Build ARM64 Netplay Server
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out pinned EmulatorJS netplay source
+        run: |
+          git clone https://github.com/EmulatorJS/EmulatorJS-Netplay.git netplay
+          git -C netplay checkout 4090ca7bda795a8b7a7596f4d41a4605b515d9c5
+
+      - name: Install Rust cross compiler
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build static ARM64 server
+        working-directory: netplay
+        run: cross build --release --target aarch64-unknown-linux-musl
+
+      - name: Stage licenses and binary
+        run: |
+          mkdir artifact
+          install -m 0755 netplay/target/aarch64-unknown-linux-musl/release/rust-socket-server artifact/emulatorjs-netplay-server
+          install -m 0644 netplay/LICENSE artifact/EMULATORJS-NETPLAY-LICENSE
+          printf '%s\n' 4090ca7bda795a8b7a7596f4d41a4605b515d9c5 > artifact/UPSTREAM-COMMIT
+
+      - name: Upload ARM64 test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulatorjs-netplay-linux-arm64
+          path: artifact
+          if-no-files-found: error

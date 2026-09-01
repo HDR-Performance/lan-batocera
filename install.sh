@@ -14,6 +14,7 @@ if [ "$(uname -m)" != "aarch64" ]; then echo "This release currently supports aa
 
 mkdir -p "$ARCADE_ROOT/web" "$FB_ROOT/cache" "$SERVICE_ROOT" /userdata/system/logs
 install -m 0755 "$APP_ROOT/src/server.py" "$ARCADE_ROOT/server.py"
+install -m 0644 "$APP_ROOT/src/multiplayer.py" "$ARCADE_ROOT/multiplayer.py"
 install -m 0644 "$APP_ROOT/VERSION" "$ARCADE_ROOT/VERSION"
 install -m 0755 "$APP_ROOT/src/upload_proxy.py" "$FB_ROOT/upload_proxy.py"
 install -m 0644 "$APP_ROOT/web/index.html" "$ARCADE_ROOT/web/index.html"
@@ -21,6 +22,7 @@ install -m 0644 "$APP_ROOT/web/play.html" "$ARCADE_ROOT/web/play.html"
 install -m 0644 "$APP_ROOT/web/controller-presets.js" "$ARCADE_ROOT/web/controller-presets.js"
 install -m 0644 "$APP_ROOT/web/fullscreen-controls.js" "$ARCADE_ROOT/web/fullscreen-controls.js"
 install -m 0644 "$APP_ROOT/web/mobile-lifecycle.js" "$ARCADE_ROOT/web/mobile-lifecycle.js"
+install -m 0644 "$APP_ROOT/web/multiplayer.js" "$ARCADE_ROOT/web/multiplayer.js"
 install -m 0644 "$APP_ROOT/web/themes.js" "$ARCADE_ROOT/web/themes.js"
 install -m 0644 "$APP_ROOT/web/wake-lock.js" "$ARCADE_ROOT/web/wake-lock.js"
 install -m 0755 "$APP_ROOT/services/emulatorjs_lan" "$SERVICE_ROOT/emulatorjs_lan"

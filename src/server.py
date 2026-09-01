@@ -16,6 +16,10 @@ import urllib.request
 import uuid
 import xml.etree.ElementTree as ET
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+try:
+    from multiplayer import MultiplayerSessionRegistry
+except ModuleNotFoundError:
+    from src.multiplayer import MultiplayerSessionRegistry
 
 WEB_ROOT = "/userdata/system/emulatorjs-lan/web"
 ROMS_ROOT = "/userdata/roms"
@@ -51,6 +55,7 @@ ARTWORK_REPOSITORIES = {
 }
 ARTWORK_JOB = None
 ARTWORK_LOCK = threading.Lock()
+MULTIPLAYER_SESSIONS = MultiplayerSessionRegistry()
 
 
 def project_version() -> str:
@@ -614,6 +619,9 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(payload)
             return
+        if parsed.path == "/api/multiplayer/session":
+            self._json_response(200, MULTIPLAYER_SESSIONS.current())
+            return
         if parsed.path == "/api/artwork/status":
             self._json_response(200, artwork_status())
             return
@@ -693,6 +701,34 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         request_path = urllib.parse.urlparse(self.path).path
+        if request_path == "/api/multiplayer/host":
+            try:
+                request = self._json_request()
+                self._json_response(201, MULTIPLAYER_SESSIONS.host(request.get("game")))
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(400, {"error": str(error)})
+            return
+        if request_path == "/api/multiplayer/heartbeat":
+            try:
+                request = self._json_request()
+                result = MULTIPLAYER_SESSIONS.heartbeat(
+                    request.get("id", ""), request.get("token", ""), request.get("role", ""))
+                self._json_response(200, result)
+            except PermissionError as error:
+                self._json_response(403, {"error": str(error)})
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(409, {"error": str(error)})
+            return
+        if request_path == "/api/multiplayer/close":
+            try:
+                request = self._json_request()
+                self._json_response(200, {"closed": MULTIPLAYER_SESSIONS.close(
+                    request.get("id", ""), request.get("token", ""))})
+            except PermissionError as error:
+                self._json_response(403, {"error": str(error)})
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(400, {"error": str(error)})
+            return
         if request_path == "/api/artwork/start":
             if self.headers.get("X-LAN-Batocera-Action") != "fetch-artwork":
                 self._json_response(403, {"error": "Explicit artwork confirmation is required."})
@@ -733,7 +769,18 @@ class Handler(SimpleHTTPRequestHandler):
             self._json_response(400, {"error": str(error) or "Could not save state."})
 
     def do_DELETE(self):
-        if urllib.parse.urlparse(self.path).path != "/api/states":
+        request_path = urllib.parse.urlparse(self.path).path
+        if request_path == "/api/multiplayer/session":
+            try:
+                request = self._json_request()
+                self._json_response(200, {"closed": MULTIPLAYER_SESSIONS.close(
+                    request.get("id", ""), request.get("token", ""))})
+            except PermissionError as error:
+                self._json_response(403, {"error": str(error)})
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(400, {"error": str(error)})
+            return
+        if request_path != "/api/states":
             self.send_error(404)
             return
         try:

@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.4.1**. Releases follow Semantic Versioning; contribution
+Current release: **v1.5.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -58,6 +58,28 @@ Game cells use an artwork-first layout when cover art is available: the cover
 occupies most of the card, with system and title metadata arranged beneath it.
 Cards without artwork retain a compact text layout, and phone layouts enlarge a
 single-column cover further on narrow screens.
+
+### Experimental multiplayer
+
+Open **Multiplayer Settings** in the library and choose one mode:
+
+- **Host** creates a synchronized two-player room whenever this device launches
+  a game. The host is Player 1 and retains restart, pause, save, and exit control.
+- **Join** waits for an active host, then automatically opens the identical game
+  and joins as Player 2.
+- **Solo** disables multiplayer and launches games normally.
+
+The discovery layer preserves the host's exact LAN origin so both browsers use
+the same room domain even when the device is reachable by both IP address and
+`.local` name. Host sessions expire after 20 seconds without a heartbeat.
+Every configured LAN Batocera system exposes the feature, but EmulatorJS netplay
+is experimental and individual cores must be verified with two real browsers.
+During the v1.5.0 compatibility test, synchronization uses the upstream
+EmulatorJS netplay service. Game data still comes directly from the Batocera
+device, and emulation still runs locally in each browser. A fully Pi-local
+signaling service remains a separate ARM packaging milestone; the upstream
+Linux release is an x86 Electron application and cannot run on a Raspberry Pi 3.
+
 Sega 32X libraries are scanned from `/userdata/roms/sega32x` and launched with
 EmulatorJS's PicoDrive-backed `sega32x` core. ZIP and 7z containers are supported
 alongside raw `.32x`, `.smd`, `.bin`, and `.md` ROMs.
@@ -118,7 +140,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.4.1/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh

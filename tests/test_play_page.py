@@ -46,7 +46,8 @@ class PlayPageTests(unittest.TestCase):
     def test_every_core_gets_one_guarded_startup_restart(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
             page = source.read()
-        self.assertIn("window.EJS_onGameStart=prepareStartedGame", page)
+        self.assertIn("window.EJS_onGameStart=handleGameStart", page)
+        self.assertIn("prepareStartedGame()", page)
         self.assertIn("document.body.append(loader);prepareStartedGame()", page)
         self.assertIn("startupRestartState!=='pending'", page)
         self.assertIn("waitForMenuButton('Restart')", page)
