@@ -57,12 +57,18 @@ changed credentials.
 
 After installation:
 
-- Open `http://BATOCERA-IP:8080` to play.
-- Open `http://BATOCERA-IP:8081` to upload and manage files.
+- Open `http://batocera.local:8080` to play. The direct-IP address remains a
+  fallback when a client does not support `.local` mDNS names.
+- Open `http://batoceraroms.local:8081` to upload and manage files. LAN
+  Batocera publishes this additional mDNS alias while its service is running.
 - Upload ROMs inside the correct directory under **Games**, such as `gba`, `nes`,
   `snes`, or `megadrive`.
 - Select **Refresh Games** in the arcade after adding ROMs to rescan supported
   system folders without restarting the service.
+
+Both friendly names resolve to the same Batocera device, so their `:8080` and
+`:8081` ports remain part of the URLs. DNS and mDNS names identify a host; web
+browsers do not automatically select different HTTP ports from those names.
 
 The file manager accepts multi-file selection and drag-and-drop, runs up to four
 uploads concurrently, and uses 50 MB chunks for large transfers. The browser

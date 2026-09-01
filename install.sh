@@ -19,6 +19,7 @@ install -m 0644 "$APP_ROOT/web/index.html" "$ARCADE_ROOT/web/index.html"
 install -m 0644 "$APP_ROOT/web/play.html" "$ARCADE_ROOT/web/play.html"
 install -m 0755 "$APP_ROOT/services/emulatorjs_lan" "$SERVICE_ROOT/emulatorjs_lan"
 install -m 0755 "$APP_ROOT/services/filebrowser_quantum" "$SERVICE_ROOT/filebrowser_quantum"
+install -m 0755 "$APP_ROOT/services/lan_batocera_mdns" "$SERVICE_ROOT/lan_batocera_mdns"
 
 if [ ! -x "$FB_ROOT/filebrowser" ]; then
   echo "Downloading FileBrowser Quantum ${FB_VERSION}..."
@@ -40,14 +41,18 @@ fi
 
 batocera-services enable emulatorjs_lan
 batocera-services enable filebrowser_quantum
+batocera-services enable lan_batocera_mdns
 batocera-services restart emulatorjs_lan || "$SERVICE_ROOT/emulatorjs_lan" start
 batocera-services restart filebrowser_quantum || "$SERVICE_ROOT/filebrowser_quantum" start
+batocera-services restart lan_batocera_mdns || "$SERVICE_ROOT/lan_batocera_mdns" start
 
 if [ "$NEW_ACCOUNT" = "1" ]; then
   printf '\nFile manager first login\nUsername: Batocera\nPassword: Batocera\nChange both in Profile -> Security after signing in.\n\n'
 fi
 
-IP_ADDRESS="$(hostname -I | awk '{print $1}')"
+IP_ADDRESS="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
 echo "Arcade:      http://${IP_ADDRESS}:8080"
 echo "File manager: http://${IP_ADDRESS}:8081"
+echo "Friendly arcade address: http://batocera.local:8080"
+echo "Friendly ROM address:    http://batoceraroms.local:8081"
 echo "Installation complete."

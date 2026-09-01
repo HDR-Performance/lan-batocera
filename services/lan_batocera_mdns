@@ -1,0 +1,19 @@
+#!/bin/bash
+PIDFILE=/var/run/lan-batocera-mdns.pid
+LOG=/userdata/system/logs/lan-batocera-mdns.log
+ALIAS=BatoceraRoms.local
+
+case "$1" in
+  start)
+    mkdir -p /userdata/system/logs
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then exit 0; fi
+    IP_ADDRESS="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+    if [ -z "$IP_ADDRESS" ]; then echo "No LAN address available" >>"$LOG"; exit 1; fi
+    /usr/bin/avahi-publish-address -R "$ALIAS" "$IP_ADDRESS" >>"$LOG" 2>&1 &
+    echo $! > "$PIDFILE"
+    ;;
+  stop)
+    if [ -f "$PIDFILE" ]; then kill "$(cat "$PIDFILE")" 2>/dev/null || true; rm -f "$PIDFILE"; fi
+    ;;
+  restart) "$0" stop; "$0" start ;;
+esac
