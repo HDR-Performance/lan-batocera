@@ -30,6 +30,9 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("status.nativeGameRunning", page)
         self.assertIn("Console in use", page)
         self.assertIn("document.createElement('script')", page)
+        self.assertIn("Stop HDMI Game &amp; Start LAN", page)
+        self.assertIn("/api/session-stop", page)
+        self.assertIn("X-LAN-Batocera-Action", page)
 
 
 if __name__ == "__main__":

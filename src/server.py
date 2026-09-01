@@ -4,6 +4,7 @@ import hashlib
 import json
 import mimetypes
 import os
+import subprocess
 import time
 import urllib.parse
 import uuid
@@ -219,6 +220,45 @@ def native_game_running(proc_root="/proc"):
     return False
 
 
+def native_game_status():
+    try:
+        result = subprocess.run(["/usr/bin/batocera-es-swissknife", "--emupid"],
+                                capture_output=True, text=True, timeout=4, check=False)
+        pids = [int(value) for value in result.stdout.split() if value.isdigit() and value != "0"]
+        running = bool(pids) and result.returncode != 21
+        label = "Native Batocera game"
+        for pid in reversed(pids):
+            try:
+                with open(f"/proc/{pid}/cmdline", "rb") as source:
+                    executable = source.read(4096).split(b"\0", 1)[0].decode("utf-8", "ignore")
+                if executable and "emulatorlauncher" not in executable:
+                    label = os.path.basename(executable)
+                    break
+            except OSError:
+                continue
+        return {"nativeGameRunning": running, "nativeGameLabel": label if running else ""}
+    except (OSError, subprocess.SubprocessError):
+        running = native_game_running()
+        return {"nativeGameRunning": running,
+                "nativeGameLabel": "Native Batocera game" if running else ""}
+
+
+def stop_native_game():
+    if not native_game_status()["nativeGameRunning"]:
+        return {"stopped": True, "alreadyStopped": True}
+    try:
+        result = subprocess.run(["/usr/bin/batocera-es-swissknife", "--emukill", "8"],
+                                capture_output=True, text=True, timeout=15, check=False)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RuntimeError(f"Batocera could not stop the emulator: {error}")
+    deadline = time.monotonic() + 4
+    while time.monotonic() < deadline:
+        if not native_game_status()["nativeGameRunning"]:
+            return {"stopped": True, "methodCode": result.returncode}
+        time.sleep(0.25)
+    raise RuntimeError("The native emulator did not close. Use the controller to exit it and try again.")
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=WEB_ROOT, **kwargs)
@@ -239,7 +279,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(payload)
             return
         if parsed.path == "/api/session-status":
-            payload = json.dumps({"nativeGameRunning": native_game_running()}).encode()
+            payload = json.dumps(native_game_status()).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(payload)))
@@ -305,7 +345,17 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(payload)
 
     def do_POST(self):
-        if urllib.parse.urlparse(self.path).path != "/api/states":
+        request_path = urllib.parse.urlparse(self.path).path
+        if request_path == "/api/session-stop":
+            if self.headers.get("X-LAN-Batocera-Action") != "stop-native-game":
+                self._json_response(403, {"error": "Explicit stop confirmation is required."})
+                return
+            try:
+                self._json_response(200, stop_native_game())
+            except RuntimeError as error:
+                self._json_response(409, {"error": str(error)})
+            return
+        if request_path != "/api/states":
             self.send_error(404)
             return
         try:

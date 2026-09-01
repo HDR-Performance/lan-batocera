@@ -3,6 +3,7 @@ import base64
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 
 MODULE_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "server.py")
@@ -63,6 +64,17 @@ class SaveStateTests(unittest.TestCase):
             with open(os.path.join(proc, "123", "cmdline"), "wb") as output:
                 output.write(b"/usr/bin/retroarch\0-L\0snes9x_libretro.so")
             self.assertTrue(server.native_game_running(proc))
+
+    def test_stop_uses_batocera_supported_emulator_kill(self):
+        statuses = [{"nativeGameRunning": True}, {"nativeGameRunning": False}]
+        completed = mock.Mock(returncode=20)
+        with mock.patch.object(server, "native_game_status", side_effect=statuses), \
+                mock.patch.object(server.subprocess, "run", return_value=completed) as run:
+            result = server.stop_native_game()
+        self.assertTrue(result["stopped"])
+        run.assert_called_once_with(
+            ["/usr/bin/batocera-es-swissknife", "--emukill", "8"],
+            capture_output=True, text=True, timeout=15, check=False)
 
 
 if __name__ == "__main__":
