@@ -2,8 +2,13 @@
 
 LAN Batocera adds two local-network web services to a Batocera device:
 
-- A browser-playable ROM library at `http://BATOCERA-IP:8080`
-- An authenticated drag-and-drop manager at `http://BATOCERA-IP:8081`
+- A browser-playable ROM library at <http://batocera.local:8080>
+- An authenticated drag-and-drop manager at <http://batoceraroms.local:8081>
+
+If a phone or computer does not support `.local` mDNS names, use the Batocera
+device's current IPv4 address instead—for example,
+`http://192.168.x.x:8080` and `http://192.168.x.x:8081`. `BATOCERA-IP` in older
+instructions was a placeholder, not a literal hostname.
 
 The arcade uses [EmulatorJS](https://emulatorjs.org/) in the client browser. The
 file manager uses [FileBrowser Quantum](https://github.com/gtsteffaniak/filebrowser).
