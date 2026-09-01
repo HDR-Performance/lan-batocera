@@ -137,6 +137,10 @@ class ArtworkTests(unittest.TestCase):
         self.assertIn("/api/artwork/start", page)
         self.assertIn("artworkBar", page)
         self.assertIn("game-art", page)
+        self.assertIn("height:250px", page)
+        self.assertIn("gameCopy.className='game-copy'", page)
+        self.assertIn("game-link.has-art{display:flex", page)
+        self.assertIn(".games{align-items:start}", page)
 
 
 if __name__ == "__main__":

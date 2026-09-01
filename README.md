@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.0.0**. Releases follow Semantic Versioning; contribution
+Current release: **v1.1.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -32,6 +32,10 @@ frame rate. During play, open EmulatorJS's gear menu and change **Shader** to
 Disabled, 2xScaleHQ, or 4xScaleHQ according to the client device's GPU. This
 filters the locally rendered frame; it does not add detail to original ROM
 textures or make the Raspberry Pi perform the emulation.
+Game cells use an artwork-first layout when cover art is available: the cover
+occupies most of the card, with system and title metadata arranged beneath it.
+Cards without artwork retain a compact text layout, and phone layouts enlarge a
+single-column cover further on narrow screens.
 Sega 32X libraries are scanned from `/userdata/roms/sega32x` and launched with
 EmulatorJS's PicoDrive-backed `sega32x` core. ZIP and 7z containers are supported
 alongside raw `.32x`, `.smd`, `.bin`, and `.md` ROMs.
