@@ -28,6 +28,20 @@ redistributed by this repository.
 EmulatorJS is not vendored or redistributed in this repository. A visiting
 browser downloads it from the upstream CDN at runtime.
 
+## EmulatorJS Netplay Server
+
+- Project: [EmulatorJS/EmulatorJS-Netplay](https://github.com/EmulatorJS/EmulatorJS-Netplay)
+- Credit: the EmulatorJS maintainers and netplay contributors
+- License: [Apache License 2.0](https://github.com/EmulatorJS/EmulatorJS-Netplay/blob/rust/LICENSE)
+- Use here: LAN Batocera builds the lightweight signaling and synchronization
+  server for `aarch64-unknown-linux-musl` from upstream commit
+  `4090ca7bda795a8b7a7596f4d41a4605b515d9c5`. The reproducible workflow stages
+  the binary, exact commit identifier, and upstream license together.
+
+The release binary is distributed without modification and runs as a separate
+Batocera service on TCP port 4000. LAN Batocera's project-specific Host/Join UI
+and active-game discovery remain MIT-licensed code from this repository.
+
 ## FileBrowser Quantum
 
 - Project: [gtsteffaniak/filebrowser](https://github.com/gtsteffaniak/filebrowser)

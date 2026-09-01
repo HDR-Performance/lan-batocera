@@ -74,11 +74,11 @@ the same room domain even when the device is reachable by both IP address and
 `.local` name. Host sessions expire after 20 seconds without a heartbeat.
 Every configured LAN Batocera system exposes the feature, but EmulatorJS netplay
 is experimental and individual cores must be verified with two real browsers.
-During the v1.5.0 compatibility test, synchronization uses the upstream
-EmulatorJS netplay service. Game data still comes directly from the Batocera
-device, and emulation still runs locally in each browser. A fully Pi-local
-signaling service remains a separate ARM packaging milestone; the upstream
-Linux release is an x86 Electron application and cannot run on a Raspberry Pi 3.
+Synchronization uses a Pi-local ARM64 build of the Apache-licensed EmulatorJS
+netplay server on TCP port 4000. It is pinned to upstream commit
+`4090ca7bda795a8b7a7596f4d41a4605b515d9c5`; the reproducible GitHub Actions
+workflow builds the static binary and records the upstream license. Game data
+comes directly from Batocera, and emulation runs locally in each browser.
 
 Sega 32X libraries are scanned from `/userdata/roms/sega32x` and launched with
 EmulatorJS's PicoDrive-backed `sega32x` core. ZIP and 7z containers are supported

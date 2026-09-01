@@ -61,15 +61,20 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn("window.EJS_EXPERIMENTAL_NETPLAY=true", page)
         self.assertIn("window.EJS_netplayServer=NETPLAY_SERVER", page)
         self.assertIn("emulator.netplay.openRoom(multiplayerSession,2,'')", page)
-        self.assertIn("emulator.netplay.joinRoom(multiplayerSession,room.room_name)", page)
+        self.assertIn("room.room_name===multiplayerSession", page)
+        self.assertIn("emulator.netplay.joinRoom(roomId,room.room_name)", page)
         self.assertIn("Player 1", page)
         self.assertIn("Player 2", page)
+        self.assertIn("startupRestart='multiplayer-skip'", page)
+        self.assertIn("session?.players===2", page)
 
     def test_installer_copies_multiplayer_components(self):
         with open(os.path.join(ROOT, "install.sh"), encoding="utf-8") as source:
             installer = source.read()
         self.assertIn('src/multiplayer.py', installer)
         self.assertIn('web/multiplayer.js', installer)
+        self.assertIn('services/emulatorjs_netplay', installer)
+        self.assertIn('emulatorjs-netplay-server-linux-arm64', installer)
 
 
 if __name__ == "__main__":

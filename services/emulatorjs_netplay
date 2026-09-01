@@ -1,0 +1,17 @@
+#!/bin/bash
+PIDFILE=/var/run/emulatorjs-netplay.pid
+LOG=/userdata/system/logs/emulatorjs-netplay.log
+BINARY=/userdata/system/emulatorjs-netplay/emulatorjs-netplay-server
+
+case "$1" in
+  start)
+    mkdir -p /userdata/system/logs
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then exit 0; fi
+    PORT=4000 "$BINARY" >>"$LOG" 2>&1 &
+    echo $! > "$PIDFILE"
+    ;;
+  stop)
+    if [ -f "$PIDFILE" ]; then kill "$(cat "$PIDFILE")" 2>/dev/null || true; rm -f "$PIDFILE"; fi
+    ;;
+  restart) "$0" stop; "$0" start ;;
+esac
