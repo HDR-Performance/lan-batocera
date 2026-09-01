@@ -42,7 +42,7 @@ EXTRACT_JOBS = {}
 EXTRACT_JOBS_LOCK = threading.Lock()
 ACTIVE_EXTRACT_JOB = None
 
-FILE_TYPE_JS_PATCHES = (
+FILEBROWSER_JS_PATCHES = (
     (b'modifiedSorted(){return be.sorting().by==="modified"},durationSorted()',
      b'modifiedSorted(){return be.sorting().by==="modified"},typeSorted(){return be.sorting().by==="type"},durationSorted()'),
     (b'modifiedIcon(){return this.modifiedSorted&&this.ascOrdered?"arrow_downward":"arrow_upward"},durationIcon()',
@@ -51,22 +51,34 @@ FILE_TYPE_JS_PATCHES = (
      b'||t==="modified"&&this.modifiedIcon==="arrow_upward"||t==="type"&&this.typeIcon==="arrow_upward"||t==="duration"'),
     (b'],10,V2e),M("p",{class:mt([{active:r.sizeSorted},"size"])',
      b'],10,V2e),M("p",{class:mt([{active:r.typeSorted},"size"]),role:"button",tabindex:"0",onClick:a=>r.sort("type"),title:"Sort by file type","aria-label":"Sort by file type"},[r.typeSorted?(H(),J("i",G2e,j(r.typeIcon),1)):Me("",!0),M("span",null,"Type")],10,V2e),M("p",{class:mt([{active:r.sizeSorted},"size"])'),
+    (b'this.PROGRESS_TIMEOUT_MS=1e4', b'this.PROGRESS_TIMEOUT_MS=12e4'),
+    (b'const e=L.user.fileLoading?.maxConcurrentUpload||3;',
+     b'const e=Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4);'),
+    (b'r=ui(()=>zs.queue),a=Gr(!1)', b'r=ui(()=>[...zs.queue].reverse()),a=Gr(!1)'),
+    (b'e.connectionIssue=!0,this.pause(e.id),e.errorDetails="Connection stalled - upload paused. Click resume to retry."',
+     b'e.connectionIssue=!0,this.isOverallPaused=!0,this.pause(e.id),e.errorDetails="Connection stalled - queue paused. Resume to retry this file before continuing."'),
+    (b'this.queue.some(r=>r.status==="error"||r.status==="conflict")||ae.setReload(!0),this.hadActiveUploads=!1',
+     b'ae.setReload(!0),QH().then(r=>ae.updateSourceInfo(r)).catch(()=>{}),this.hadActiveUploads=!1'),
+    (b'type:"range",min:"1",max:"10",onChange:',
+     b'type:"range",min:"1",max:"4",onChange:'),
+    (b'type:"range",min:"1",max:"10",placeholder:',
+     b'type:"range",min:"1",max:"4",placeholder:'),
 )
 
 
 def _patch_file_type_sort(path, body):
     if not (path.startswith("/public/static/assets/index-") and path.endswith(".js")):
         return body, False
-    if not all(old in body for old, _new in FILE_TYPE_JS_PATCHES):
+    if not all(old in body for old, _new in FILEBROWSER_JS_PATCHES):
         return body, False
-    for old, new in FILE_TYPE_JS_PATCHES:
+    for old, new in FILEBROWSER_JS_PATCHES:
         body = body.replace(old, new, 1)
     return body, True
 
 
 def _version_filebrowser_html(body):
     pattern = rb'(/public/static/assets/index-[^"\' ?]+\.js)(["\'])'
-    updated, count = re.subn(pattern, rb'\1?lan-batocera-type-sort=1\2', body, count=1)
+    updated, count = re.subn(pattern, rb'\1?lan-batocera-upload-fifo=2\2', body, count=1)
     return updated, count == 1
 
 

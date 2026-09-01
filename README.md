@@ -72,6 +72,12 @@ interrupt a long bulk upload.
 Available storage, browser memory, browser limits, and network reliability remain
 additional practical limits.
 
+Upload jobs are displayed and started in top-to-bottom FIFO order with a hard
+maximum of four active transfers. A transfer must make no progress for two minutes
+before it is treated as stalled; a stall pauses the queue so later files do not
+skip ahead. Completing a batch refreshes both the current directory listing and
+the source storage-usage figures, including when failed items remain for review.
+
 The desktop listing header includes **Type** alongside Name, Size, and Last
 Modified. Selecting Type sorts folders and files by FileBrowser's MIME file-type
 field and selecting it again reverses the order. This integration targets the

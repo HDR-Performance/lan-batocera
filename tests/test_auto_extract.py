@@ -20,13 +20,25 @@ def make_zip(path, files):
 
 class AutoExtractTests(unittest.TestCase):
     def test_filebrowser_frontend_gains_real_type_sort_control(self):
-        fixture = b"|".join(old for old, _new in proxy.FILE_TYPE_JS_PATCHES)
+        fixture = b"|".join(old for old, _new in proxy.FILEBROWSER_JS_PATCHES)
         patched, changed = proxy._patch_file_type_sort(
             "/public/static/assets/index-test.js", fixture)
         self.assertTrue(changed)
         self.assertIn(b'typeSorted(){return be.sorting().by==="type"}', patched)
         self.assertIn(b'r.sort("type")', patched)
         self.assertIn(b"Sort by file type", patched)
+
+    def test_filebrowser_upload_queue_is_fifo_capped_and_refreshes_usage(self):
+        fixture = b"|".join(old for old, _new in proxy.FILEBROWSER_JS_PATCHES)
+        patched, changed = proxy._patch_file_type_sort(
+            "/public/static/assets/index-upload.js", fixture)
+        self.assertTrue(changed)
+        self.assertIn(b"Math.min(4,L.user.fileLoading?.maxConcurrentUpload||4)", patched)
+        self.assertIn(b"ui(()=>[...zs.queue].reverse())", patched)
+        self.assertIn(b"this.PROGRESS_TIMEOUT_MS=12e4", patched)
+        self.assertIn(b"this.isOverallPaused=!0,this.pause(e.id)", patched)
+        self.assertIn(b"QH().then(r=>ae.updateSourceInfo(r))", patched)
+        self.assertIn(b'max:"4"', patched)
 
     def test_unrecognized_frontend_asset_is_not_modified(self):
         original = b"console.log('different version')"
@@ -36,7 +48,7 @@ class AutoExtractTests(unittest.TestCase):
         self.assertIs(patched, original)
 
     def test_file_type_patch_fixture_survives_gzip_delivery(self):
-        fixture = b"|".join(old for old, _new in proxy.FILE_TYPE_JS_PATCHES)
+        fixture = b"|".join(old for old, _new in proxy.FILEBROWSER_JS_PATCHES)
         decoded = gzip.decompress(gzip.compress(fixture))
         patched, changed = proxy._patch_file_type_sort(
             "/public/static/assets/index-compressed.js", decoded)
@@ -47,7 +59,7 @@ class AutoExtractTests(unittest.TestCase):
         html = b'<script type="module" src="/public/static/assets/index-test.js"></script>'
         versioned, changed = proxy._version_filebrowser_html(html)
         self.assertTrue(changed)
-        self.assertIn(b'index-test.js?lan-batocera-type-sort=1"', versioned)
+        self.assertIn(b'index-test.js?lan-batocera-upload-fifo=2"', versioned)
 
     def test_current_file_manager_directory_becomes_auto_extract_context(self):
         context = proxy._directory_from_referer(
