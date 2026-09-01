@@ -31,6 +31,22 @@ class ControllerPresetTests(unittest.TestCase):
         self.assertIn("Bluetooth", library_page)
         self.assertIn("Controllers", library_page)
 
+    def test_in_game_menu_can_change_controller_mode(self):
+        play_page = self.read_file("web/play.html")
+        self.assertIn('id="controllerStatus"', play_page)
+        self.assertIn("$('controllerStatus').onclick", play_page)
+        self.assertIn("Touch Controls / Browser Default", play_page)
+
+    def test_physical_controller_mode_hides_virtual_gamepad(self):
+        play_page = self.read_file("web/play.html")
+        self.assertIn(
+            "body[data-controller-input=physical] .ejs_virtualGamepad_parent",
+            play_page,
+        )
+        self.assertIn("toggleVirtualGamepad?.(isVisible)", play_page)
+        self.assertIn("setTouchControlsVisible(false)", play_page)
+        self.assertIn("setTouchControlsVisible(true)", play_page)
+
 
 if __name__ == "__main__":
     unittest.main()
