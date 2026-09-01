@@ -7,6 +7,10 @@ LAN Batocera adds two local-network web services to a Batocera device:
 
 The arcade uses [EmulatorJS](https://emulatorjs.org/) in the client browser. The
 file manager uses [FileBrowser Quantum](https://github.com/gtsteffaniak/filebrowser).
+LAN Batocera also integrates with Batocera's supported service system and
+`batocera-es-swissknife` emulator lifecycle commands. See
+[Third-party notices](THIRD_PARTY_NOTICES.md) for upstream projects, authors,
+licenses, and the exact integration boundaries.
 Both services live in Batocera's persistent `/userdata` partition and start with
 Batocera's supported user-service system. The library provides console tiles
 with game counts, console and handheld categories, system filtering, title
@@ -130,9 +134,12 @@ The current arcade loads the stable EmulatorJS engine from its public CDN, so th
 client browser needs internet access when starting a game. ROM data is served by
 the Batocera device over the LAN. Controllers connect to the browser device, and
 browser saves are separate from Batocera's native emulator saves.
-After choosing a game, select its **Start** button once. This deliberate browser
-interaction reliably unlocks WebAudio and the emulator core; automatic startup
-is disabled because browsers can suspend a new page until it receives input.
+LAN games run in the visiting phone or PC browser, not as emulator processes on
+the Batocera host. When leaving a game, the page activates EmulatorJS's own
+**Exit Emulation** control and waits for the documented `EJS_onExit` callback
+or EmulatorJS's own exited state before releasing the emulator instance
+and returning to the library. If closure is not confirmed, the page stays open
+and reports the failure instead of claiming the game stopped.
 
 ## Remove
 
@@ -149,4 +156,6 @@ you explicitly delete those files yourself.
 
 The project-specific code is available under the [MIT License](LICENSE).
 EmulatorJS and FileBrowser Quantum remain under their respective licenses and are
-not redistributed by this repository.
+not redistributed by this repository. Batocera is an independent upstream
+project. Full acknowledgements and license links are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -12,7 +12,12 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("window.EJS_startOnLoaded=true", page)
         self.assertIn("Save State &amp; Exit", page)
         self.assertIn("Exit Without Saving", page)
-        self.assertIn("window.EJS_emulator?.callEvent('exit')", page)
+        self.assertIn("button.ejs_menu_button", page)
+        self.assertIn("==='Exit Emulation'", page)
+        self.assertIn(".ejs_popup_container button", page)
+        self.assertIn("confirmEmulatorExit", page)
+        self.assertIn("EmulatorJS has exited", page)
+        self.assertIn("The emulator did not confirm that it closed", page)
 
     def test_saved_state_manager_supports_load_and_multi_delete(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
