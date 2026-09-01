@@ -56,6 +56,15 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("window.EJS_defaultOptions={shader:defaultShader}", page)
         self.assertIn("Video: 2× HQ", page)
 
+    def test_phone_friendly_fullscreen_control_uses_browser_api(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn('id="fullscreen"', page)
+        self.assertIn('aria-pressed="false"', page)
+        self.assertIn('/fullscreen-controls.js', page)
+        self.assertIn("LanFullscreenControls.bind", page)
+        self.assertIn("env(safe-area-inset-bottom)", page)
+
 
 if __name__ == "__main__":
     unittest.main()
