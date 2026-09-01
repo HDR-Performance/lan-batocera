@@ -30,6 +30,16 @@ class ReleaseVersionTests(unittest.TestCase):
         self.assertIn("requires an existing Batocera installation", installer)
         self.assertIn("archive/refs/tags/v${LAN_BATOCERA_VERSION}.tar.gz", installer)
 
+    def test_readme_distinguishes_default_credentials(self):
+        with open(os.path.join(REPOSITORY_ROOT, "README.md"), encoding="utf-8") as readme_file:
+            readme = readme_file.read()
+        self.assertIn("Batocera SSH", readme)
+        self.assertIn("`root` | `linux`", readme)
+        self.assertIn("LAN Batocera web file manager", readme)
+        self.assertIn("`Batocera` | `Batocera`", readme)
+        self.assertIn("Batocera Windows/SMB share", readme)
+        self.assertIn("Enforce Security", readme)
+
 
 if __name__ == "__main__":
     unittest.main()

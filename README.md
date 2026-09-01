@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.2.0**. Releases follow Semantic Versioning; contribution
+Current release: **v1.2.1**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -19,6 +19,28 @@ LAN Batocera also integrates with Batocera's supported service system and
 `batocera-es-swissknife` emulator lifecycle commands. See
 [Third-party notices](THIRD_PARTY_NOTICES.md) for upstream projects, authors,
 licenses, and the exact integration boundaries.
+
+## Default sign-in information
+
+These are three separate sign-in systems. Usernames and passwords are
+case-sensitive.
+
+| Access method | Address | Default username | Default password |
+| --- | --- | --- | --- |
+| Batocera SSH | `ssh root@batocera.local` | `root` | `linux` |
+| LAN Batocera web file manager | `http://batoceraroms.local:8081` | `Batocera` | `Batocera` |
+| Batocera Windows/SMB share | `\\BATOCERA\\share` | Guest access by default | No password by default |
+
+Batocera's **Enforce Security** setting changes the SSH/root password to the
+password shown or configured under **Main Menu → System Settings → Security**.
+When it is enabled, Windows/SMB also uses username `root` and that same current
+root password. It does not use the LAN web file manager's `Batocera` /
+`Batocera` account. Some Windows organization policies block guest SMB access;
+in that situation, enable Batocera's **Enforce Security** and sign in to the
+Windows prompt as `root` with the current Batocera root password.
+
+Change the LAN web file-manager credentials after the first login. Keep SSH,
+SMB, ports 8080 and 8081 restricted to a trusted local network.
 Both services live in Batocera's persistent `/userdata` partition and start with
 Batocera's supported user-service system. The library provides console tiles
 with game counts, console and handheld categories, system filtering, title
@@ -96,7 +118,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.2.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.2.1/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
