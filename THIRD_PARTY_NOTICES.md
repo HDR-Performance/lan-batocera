@@ -53,6 +53,17 @@ LAN Batocera does not bundle or redistribute the thumbnail collections. Artwork
 and game imagery may remain copyrighted by their respective rights holders;
 users are responsible for ensuring their use is permitted in their jurisdiction.
 
+## NoSleep.js
+
+- Project: [richtr/NoSleep.js](https://github.com/richtr/NoSleep.js)
+- Credit: Rich Tibbett and NoSleep.js contributors
+- License: [MIT License](https://github.com/richtr/NoSleep.js/blob/master/LICENSE)
+- Use here: version 0.12.0 is loaded from jsDelivr at runtime as a compatibility
+  fallback when the standard Screen Wake Lock API is unavailable on LAN HTTP.
+
+NoSleep.js is not vendored in this repository. A visiting browser downloads the
+version-pinned distribution at runtime.
+
 ## Platform and standard-library components
 
 The project uses Batocera's bundled Python 3 runtime and Python standard

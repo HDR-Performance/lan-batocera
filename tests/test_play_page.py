@@ -65,6 +65,26 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("LanFullscreenControls.bind", page)
         self.assertIn("env(safe-area-inset-bottom)", page)
 
+    def test_screen_lock_pauses_autosaves_and_requires_resume(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn('/mobile-lifecycle.js', page)
+        self.assertIn('Automatic screen-off save', page)
+        self.assertIn('id="resumeModal"', page)
+        self.assertIn('id="resumeGame"', page)
+        self.assertIn('LanMobileLifecycle.bind', page)
+        self.assertIn("window.EJS_emulator?.pause?.()", page)
+
+    def test_keep_screen_on_uses_wake_lock_with_versioned_fallback(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn('id="wakeLock"', page)
+        self.assertIn('/wake-lock.js', page)
+        self.assertIn('nosleep.js@0.12.0', page)
+        self.assertIn('integrity="sha256-', page)
+        self.assertIn("wakeLockController?.disable()", page)
+        self.assertIn("wakeLockController?.enable()", page)
+
 
 if __name__ == "__main__":
     unittest.main()

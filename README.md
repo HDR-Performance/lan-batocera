@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.3.0**. Releases follow Semantic Versioning; contribution
+Current release: **v1.4.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -118,7 +118,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.3.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.4.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
@@ -235,6 +235,23 @@ direct user interaction. The button changes to **Exit Fullscreen** while active.
 If an iPhone browser does not expose webpage fullscreen, the page explains how
 to use **Share → Add to Home Screen** for an app-style view instead of falsely
 claiming fullscreen was enabled.
+
+When a phone locks, switches apps, or backgrounds the browser, LAN Batocera
+immediately pauses the emulator and attempts one rolling **Automatic screen-off
+save**. Returning to the page opens a pause menu and requires a tap on **Resume
+Game**, which also gives mobile browsers the interaction needed to restore game
+audio. The pause menu reports whether the autosave completed; mobile operating
+systems may freeze JavaScript or networking before an asynchronous save can
+finish. The newest successful automatic save replaces the previous automatic
+save while manual saves remain untouched.
+
+Select **Keep Screen On** once after starting a game to prevent supported phones
+from dimming or sleeping. LAN Batocera first uses the browser-standard Screen
+Wake Lock API. Because wake lock normally requires HTTPS and this project is a
+local HTTP service, it also loads the MIT-licensed NoSleep.js compatibility
+fallback. The lock is released whenever the game is paused or backgrounded and
+is requested again from the player's **Resume Game** tap. Battery saver, low
+battery, browser policy, or operating-system policy can still deny the request.
 
 The default **Neon Arcade** theme is joined by Classic Dark and Pixel Purple.
 The **Themes** menu also includes a validated eight-color custom theme builder.

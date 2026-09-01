@@ -19,7 +19,9 @@ class ReleaseVersionTests(unittest.TestCase):
         self.assertIn('install -m 0644 "$APP_ROOT/VERSION" "$ARCADE_ROOT/VERSION"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/controller-presets.js"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/fullscreen-controls.js"', installer)
+        self.assertIn('install -m 0644 "$APP_ROOT/web/mobile-lifecycle.js"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/themes.js"', installer)
+        self.assertIn('install -m 0644 "$APP_ROOT/web/wake-lock.js"', installer)
         self.assertIn('LAN Batocera version:', installer)
 
     def test_standalone_installer_matches_release_version(self):
