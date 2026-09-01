@@ -81,20 +81,32 @@ FILEBROWSER_JS_PATCHES = (
      b'type:"range",min:"1",max:"4",placeholder:'),
 )
 
+FILEBROWSER_BRANDING_PATCHES = (
+    # LAN Batocera pins and tests its FileBrowser integration. Do not advertise
+    # an untested upstream binary from inside this customized frontend.
+    (b'shouldShow(){return It.updateAvailable!==""&&L.user.permissions.admin&&L.seenUpdate!==It.updateAvailable&&!L.user.disableUpdateNotifications}',
+     b'shouldShow(){return false}'),
+)
+
 
 def _patch_file_type_sort(path, body):
     if not (path.startswith("/public/static/assets/index-") and path.endswith(".js")):
         return body, False
-    if not all(old in body for old, _new in FILEBROWSER_JS_PATCHES):
-        return body, False
-    for old, new in FILEBROWSER_JS_PATCHES:
-        body = body.replace(old, new, 1)
-    return body, True
+    changed = False
+    if all(old in body for old, _new in FILEBROWSER_JS_PATCHES):
+        for old, new in FILEBROWSER_JS_PATCHES:
+            body = body.replace(old, new, 1)
+        changed = True
+    for old, new in FILEBROWSER_BRANDING_PATCHES:
+        if old in body:
+            body = body.replace(old, new, 1)
+            changed = True
+    return body, changed
 
 
 def _version_filebrowser_html(body):
     pattern = rb'(/public/static/assets/index-[^"\' ?]+\.js)(["\'])'
-    updated, count = re.subn(pattern, rb'\1?lan-batocera-upload-progress=3\2', body, count=1)
+    updated, count = re.subn(pattern, rb'\1?lan-batocera-ui=4\2', body, count=1)
     return updated, count == 1
 
 

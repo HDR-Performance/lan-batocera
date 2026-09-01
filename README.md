@@ -94,6 +94,12 @@ field and selecting it again reverses the order. This integration targets the
 bundled FileBrowser Quantum v1.5.3 frontend and leaves unknown future frontend
 assets unchanged instead of applying an unsafe partial patch.
 
+The customized file-manager frontend suppresses FileBrowser Quantum's upstream
+**An update is available** banner. LAN Batocera pins a tested upstream version;
+updating the binary independently could invalidate its upload, sorting, storage,
+and archive compatibility patches. Upstream attribution and license notices
+remain available in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 Select **Auto Extract** in the file manager to open the archive tools and unpack an uploaded ZIP or RAR into Games
 or BIOS. Extraction requires a valid file-manager login, refuses path traversal
 and symbolic links, never overwrites an existing destination folder, limits an

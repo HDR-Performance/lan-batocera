@@ -51,6 +51,14 @@ class AutoExtractTests(unittest.TestCase):
         self.assertFalse(changed)
         self.assertIs(patched, original)
 
+    def test_upstream_update_banner_is_hidden_for_pinned_flavor(self):
+        fixture = b"|".join(old for old, _new in proxy.FILEBROWSER_BRANDING_PATCHES)
+        patched, changed = proxy._patch_file_type_sort(
+            "/public/static/assets/index-update.js", fixture)
+        self.assertTrue(changed)
+        self.assertIn(b"shouldShow(){return false}", patched)
+        self.assertNotIn(b"It.updateAvailable", patched)
+
     def test_file_type_patch_fixture_survives_gzip_delivery(self):
         fixture = b"|".join(old for old, _new in proxy.FILEBROWSER_JS_PATCHES)
         decoded = gzip.decompress(gzip.compress(fixture))
@@ -63,7 +71,7 @@ class AutoExtractTests(unittest.TestCase):
         html = b'<script type="module" src="/public/static/assets/index-test.js"></script>'
         versioned, changed = proxy._version_filebrowser_html(html)
         self.assertTrue(changed)
-        self.assertIn(b'index-test.js?lan-batocera-upload-progress=3"', versioned)
+        self.assertIn(b'index-test.js?lan-batocera-ui=4"', versioned)
 
     def test_resource_listing_reports_recursive_folder_data_sizes(self):
         with tempfile.TemporaryDirectory() as root:
