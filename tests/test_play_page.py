@@ -87,6 +87,17 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn('id="resumeGame"', page)
         self.assertIn('LanMobileLifecycle.bind', page)
         self.assertIn("window.EJS_emulator?.pause?.()", page)
+        self.assertIn("RESUME_INPUT_RESET_DELAY_MS=80", page)
+        self.assertIn("emulator.pause?.();await sleep(RESUME_INPUT_RESET_DELAY_MS);emulator.play?.()", page)
+        self.assertIn("await recoverEmulatorInput()", page)
+
+    def test_game_submenus_have_back_to_game_controls(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn('id="closeGameMenu"', page)
+        self.assertIn('id="controllerBack"', page)
+        self.assertIn('id="stateBack"', page)
+        self.assertGreaterEqual(page.count("← Back to Game"), 4)
 
     def test_keep_screen_on_uses_wake_lock_with_versioned_fallback(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
