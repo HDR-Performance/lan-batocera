@@ -555,12 +555,41 @@ def stop_native_game():
     raise RuntimeError("The native emulator did not close. Use the controller to exit it and try again.")
 
 
+def cache_control_for_path(request_path):
+    parsed_path = urllib.parse.urlparse(request_path).path
+    if parsed_path == "/play.html" or parsed_path.startswith("/roms/"):
+        return "no-store, max-age=0"
+    return "no-cache"
+
+
+def parse_byte_range(range_header, file_size):
+    if not range_header:
+        return None
+    if not range_header.startswith("bytes=") or "," in range_header:
+        raise ValueError("Unsupported byte range.")
+    start_text, separator, end_text = range_header[6:].partition("-")
+    if not separator:
+        raise ValueError("Invalid byte range.")
+    if start_text:
+        start = int(start_text)
+        end = min(int(end_text), file_size - 1) if end_text else file_size - 1
+    else:
+        suffix_length = int(end_text)
+        if suffix_length < 1:
+            raise ValueError("Invalid byte range.")
+        start = max(file_size - suffix_length, 0)
+        end = file_size - 1
+    if start < 0 or start >= file_size or end < start:
+        raise ValueError("Unsatisfiable byte range.")
+    return start, end
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=WEB_ROOT, **kwargs)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", cache_control_for_path(self.path))
         self.send_header("X-Content-Type-Options", "nosniff")
         super().end_headers()
 
@@ -623,14 +652,27 @@ class Handler(SimpleHTTPRequestHandler):
                 if not os.path.isfile(filename):
                     raise FileNotFoundError
                 size = os.path.getsize(filename)
-                self.send_response(200)
+                byte_range = parse_byte_range(self.headers.get("Range"), size)
+                start, end = byte_range or (0, size - 1)
+                response_size = end - start + 1
+                self.send_response(206 if byte_range else 200)
                 self.send_header("Content-Type", mimetypes.guess_type(filename)[0] or "application/octet-stream")
-                self.send_header("Content-Length", str(size))
+                self.send_header("Accept-Ranges", "bytes")
+                self.send_header("Content-Length", str(response_size))
+                if byte_range:
+                    self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
                 self.end_headers()
                 with open(filename, "rb") as source:
-                    while chunk := source.read(1024 * 1024):
+                    source.seek(start)
+                    remaining = response_size
+                    while remaining and (chunk := source.read(min(1024 * 1024, remaining))):
                         self.wfile.write(chunk)
-            except (ValueError, FileNotFoundError, PermissionError):
+                        remaining -= len(chunk)
+            except ValueError:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{size}")
+                self.end_headers()
+            except (FileNotFoundError, PermissionError):
                 self.send_error(404)
             return
         super().do_GET()

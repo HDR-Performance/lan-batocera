@@ -18,6 +18,10 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("confirmEmulatorExit", page)
         self.assertIn("EmulatorJS has exited", page)
         self.assertIn("The emulator did not confirm that it closed", page)
+        self.assertIn("window.EJS_terminate?.()", page)
+        self.assertIn("WEBGL_lose_context", page)
+        self.assertIn("returnToLibrary()", page)
+        self.assertIn("event.persisted", page)
 
     def test_saved_state_manager_supports_load_and_multi_delete(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
@@ -64,6 +68,14 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn('/fullscreen-controls.js', page)
         self.assertIn("LanFullscreenControls.bind", page)
         self.assertIn("env(safe-area-inset-bottom)", page)
+
+    def test_mobile_game_controls_collapse_into_one_touch_menu(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn('id="mobileToolsToggle"', page)
+        self.assertIn('aria-controls="mobileToolsPanel"', page)
+        self.assertIn("setMobileToolsOpen", page)
+        self.assertIn("mobile-tools-panel.open", page)
 
     def test_screen_lock_pauses_autosaves_and_requires_resume(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:

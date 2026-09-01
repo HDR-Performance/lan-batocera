@@ -13,6 +13,18 @@ SPEC.loader.exec_module(server)
 
 
 class ArcadeScannerTests(unittest.TestCase):
+    def test_game_pages_and_roms_are_never_reused_from_browser_cache(self):
+        self.assertEqual(server.cache_control_for_path("/play.html?launch=1"), "no-store, max-age=0")
+        self.assertEqual(server.cache_control_for_path("/roms/snes/game.zip"), "no-store, max-age=0")
+        self.assertEqual(server.cache_control_for_path("/"), "no-cache")
+
+    def test_rom_byte_ranges_support_resume_and_suffix_requests(self):
+        self.assertEqual(server.parse_byte_range("bytes=10-19", 100), (10, 19))
+        self.assertEqual(server.parse_byte_range("bytes=90-", 100), (90, 99))
+        self.assertEqual(server.parse_byte_range("bytes=-10", 100), (90, 99))
+        with self.assertRaises(ValueError):
+            server.parse_byte_range("bytes=100-120", 100)
+
     def test_project_version_is_semantic(self):
         self.assertRegex(server.project_version(), r"^\d+\.\d+\.\d+$")
 

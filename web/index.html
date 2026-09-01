@@ -112,7 +112,7 @@ function gameCard(game){
   card.dataset.path=game.path;
   link.className='game-link';
   link.href='/play.html?core='+encodeURIComponent(game.core)+'&path='+encodeURIComponent(game.path)+'&name='+encodeURIComponent(game.name);
-  link.onclick=()=>recordRecent(game.path);
+  link.onclick=()=>{recordRecent(game.path);const launchUrl=new URL(link.href);launchUrl.searchParams.set('launch',Date.now().toString());link.href=launchUrl.toString()};
   favorite.type='button';
   favorite.className='favorite'+(isFavorite?' active':'');
   favorite.title='Toggle favorite';
