@@ -27,6 +27,23 @@ Sega 32X libraries are scanned from `/userdata/roms/sega32x` and launched with
 EmulatorJS's PicoDrive-backed `sega32x` core. ZIP and 7z containers are supported
 alongside raw `.32x`, `.smd`, `.bin`, and `.md` ROMs.
 
+Select **Get Artwork** in the LAN library to fetch missing box art for one
+console. Start with the 10-game test, then choose the next 100 or all remaining
+games. The job runs sequentially to protect Pi 3 memory, displays live progress,
+can be cancelled, and never replaces existing artwork. Successful matches are
+stored in that console's `images` directory and written to its `gamelist.xml`,
+so they are available in both LAN Batocera and Batocera's HDMI interface. The
+first metadata change creates a `gamelist.xml.lan-batocera.bak` backup.
+If EmulationStation is already open on HDMI, use **Main Menu → Game Settings →
+Update Games Lists** after the fetch finishes; the web feature does not restart
+EmulationStation or interrupt someone using the television.
+
+Artwork matching uses the ROM filename and the public Libretro Thumbnails
+No-Intro naming catalog. Unusual dumps, hacks, translations, and filenames that
+do not resemble catalog names may remain unmatched. The feature deliberately
+does not guess among ambiguous results or overwrite metadata supplied by another
+scraper.
+
 ## Supported hardware
 
 The installer targets Batocera v38 or newer on 64-bit ARM (`aarch64`), including

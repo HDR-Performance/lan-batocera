@@ -4,10 +4,16 @@ import hashlib
 import json
 import mimetypes
 import os
+import re
+import shutil
 import subprocess
+import threading
 import time
 import urllib.parse
+import urllib.error
+import urllib.request
 import uuid
+import xml.etree.ElementTree as ET
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 WEB_ROOT = "/userdata/system/emulatorjs-lan/web"
@@ -21,6 +27,21 @@ NATIVE_STATE_SYSTEMS = {"nes", "snes", "gb", "gbc", "gba", "megadrive", "sega32x
                         "mastersystem", "gamegear", "atari2600", "atari7800", "lynx"}
 NATIVE_EMULATOR_MARKERS = ("/retroarch", "/mupen64plus", "/ppsspp", "/pcsx2",
                            "/dolphin-emu", "/duckstation", "/rpcs3", "/xemu", "/cemu")
+ARTWORK_MAX_BYTES = 8 * 1024 * 1024
+ARTWORK_USER_AGENT = "LAN-Batocera/1.0 (+https://github.com/HDR-Performance/lan-batocera)"
+ARTWORK_REPOSITORIES = {
+    "atari2600": "Atari_-_2600", "atari7800": "Atari_-_7800", "lynx": "Atari_-_Lynx",
+    "nes": "Nintendo_-_Nintendo_Entertainment_System",
+    "snes": "Nintendo_-_Super_Nintendo_Entertainment_System",
+    "n64": "Nintendo_-_Nintendo_64", "gb": "Nintendo_-_Game_Boy",
+    "gbc": "Nintendo_-_Game_Boy_Color", "gba": "Nintendo_-_Game_Boy_Advance",
+    "megadrive": "Sega_-_Mega_Drive_-_Genesis", "sega32x": "Sega_-_32X",
+    "mastersystem": "Sega_-_Master_System_-_Mark_III", "gamegear": "Sega_-_Game_Gear",
+    "ngp": "SNK_-_Neo_Geo_Pocket", "ngpc": "SNK_-_Neo_Geo_Pocket_Color",
+    "wswan": "Bandai_-_WonderSwan", "wswanc": "Bandai_-_WonderSwan_Color",
+}
+ARTWORK_JOB = None
+ARTWORK_LOCK = threading.Lock()
 
 SYSTEMS = {
     "nes": ("nes", "Nintendo Entertainment System", "Console", {".nes", ".zip"}),
@@ -57,17 +78,209 @@ def games():
         folder = os.path.join(ROMS_ROOT, system)
         if not os.path.isdir(folder):
             continue
+        artwork = gamelist_artwork(system)
         for base, _, files in os.walk(folder):
             for filename in files:
                 if os.path.splitext(filename)[1].lower() not in extensions:
                     continue
                 full = os.path.join(base, filename)
                 relative = os.path.relpath(full, ROMS_ROOT).replace(os.sep, "/")
-                result.append({"name": os.path.splitext(filename)[0], "system": system,
-                               "systemName": system_name, "category": category,
-                               "core": core, "path": relative})
+                item = {"name": os.path.splitext(filename)[0], "system": system,
+                        "systemName": system_name, "category": category,
+                        "core": core, "path": relative}
+                image = artwork.get(os.path.realpath(full))
+                if image and os.path.isfile(os.path.join(folder, image)):
+                    item["image"] = f"{system}/{image.replace(os.sep, '/')}"
+                result.append(item)
     return sorted(result, key=lambda game: (game["category"], game["systemName"],
                                             game["name"].lower()))
+
+
+def gamelist_artwork(system):
+    folder = os.path.join(ROMS_ROOT, system)
+    filename = os.path.join(folder, "gamelist.xml")
+    if not os.path.isfile(filename):
+        return {}
+    try:
+        root = ET.parse(filename).getroot()
+    except (OSError, ET.ParseError):
+        return {}
+    result = {}
+    for game in root.findall("game"):
+        path, image = game.findtext("path"), game.findtext("image")
+        if not path or not image:
+            continue
+        full = os.path.realpath(os.path.join(folder, path))
+        media = os.path.normpath(image[2:] if image.startswith("./") else image)
+        if not media.startswith(".." + os.sep) and media != "..":
+            result[full] = media
+    return result
+
+
+def artwork_name_candidates(name):
+    base = os.path.splitext(os.path.basename(name))[0]
+    candidates = [base]
+    cleaned = re.sub(r"^\d{3,4}\s*-\s*", "", base)
+    cleaned = re.sub(r"\s*\[[^\]]+\]", "", cleaned).strip()
+    candidates.append(cleaned)
+    regions = {"(U)": "(USA)", "(E)": "(Europe)", "(J)": "(Japan)",
+               "(UE)": "(USA, Europe)", "(JU)": "(Japan, USA)"}
+    expanded = cleaned
+    for old, new in regions.items():
+        expanded = expanded.replace(old, new)
+    candidates.append(expanded)
+    candidates.append(re.sub(r"\s*\([^)]*\)\s*$", "", expanded).strip())
+    result = []
+    for candidate in candidates:
+        candidate = re.sub(r'[&*/:`<>?\\|\"]', "_", candidate).strip().rstrip(".")
+        if candidate and candidate not in result:
+            result.append(candidate)
+    return result
+
+
+def _download_artwork(repository, candidates, opener=urllib.request.urlopen):
+    for candidate in candidates:
+        encoded = urllib.parse.quote(candidate + ".png", safe="'(),!$-._~")
+        url = (f"https://raw.githubusercontent.com/libretro-thumbnails/{repository}/master/"
+               f"Named_Boxarts/{encoded}")
+        request = urllib.request.Request(url, headers={"User-Agent": ARTWORK_USER_AGENT})
+        try:
+            with opener(request, timeout=20) as response:
+                length = int(response.headers.get("Content-Length", "0") or 0)
+                if length > ARTWORK_MAX_BYTES:
+                    continue
+                data = response.read(ARTWORK_MAX_BYTES + 1)
+            if len(data) <= ARTWORK_MAX_BYTES and data.startswith(b"\x89PNG\r\n\x1a\n"):
+                return data, candidate, url
+        except (OSError, ValueError, urllib.error.URLError, urllib.error.HTTPError):
+            continue
+    return None, "", ""
+
+
+def _write_gamelist(system, additions):
+    folder = os.path.join(ROMS_ROOT, system)
+    filename = os.path.join(folder, "gamelist.xml")
+    try:
+        tree = ET.parse(filename) if os.path.isfile(filename) else ET.ElementTree(ET.Element("gameList"))
+        root = tree.getroot()
+    except (OSError, ET.ParseError) as error:
+        raise RuntimeError(f"Could not read {system}/gamelist.xml: {error}")
+    existing = {}
+    for node in root.findall("game"):
+        path = node.findtext("path")
+        if path:
+            existing[os.path.realpath(os.path.join(folder, path))] = node
+    for rom_path, image_relative, display_name in additions:
+        node = existing.get(os.path.realpath(rom_path))
+        if node is None:
+            node = ET.SubElement(root, "game")
+            ET.SubElement(node, "path").text = "./" + os.path.relpath(rom_path, folder).replace(os.sep, "/")
+            ET.SubElement(node, "name").text = display_name
+        image = node.find("image")
+        if image is None:
+            image = ET.SubElement(node, "image")
+        image.text = "./" + image_relative.replace(os.sep, "/")
+    if os.path.isfile(filename):
+        backup = filename + ".lan-batocera.bak"
+        if not os.path.isfile(backup):
+            shutil.copy2(filename, backup)
+    temporary = filename + ".lan-batocera.tmp"
+    tree.write(temporary, encoding="utf-8", xml_declaration=True)
+    ET.parse(temporary)
+    os.replace(temporary, filename)
+
+
+def _artwork_worker(job, system, limit):
+    repository = ARTWORK_REPOSITORIES[system]
+    folder = os.path.join(ROMS_ROOT, system)
+    extensions = SYSTEMS[system][3]
+    existing = gamelist_artwork(system)
+    targets = []
+    for base, directories, files in os.walk(folder):
+        directories[:] = [item for item in directories if item not in {"images", "videos", "manuals"}]
+        for filename in files:
+            full = os.path.join(base, filename)
+            if os.path.splitext(filename)[1].lower() in extensions and os.path.realpath(full) not in existing:
+                targets.append(full)
+    targets.sort(key=lambda value: value.lower())
+    if limit:
+        targets = targets[:limit]
+    job.update({"status": "running", "system": system, "total": len(targets), "processed": 0,
+                "downloaded": 0, "missing": 0, "errors": [], "current": ""})
+    additions = []
+    image_folder = os.path.join(folder, "images")
+    os.makedirs(image_folder, exist_ok=True)
+    try:
+        for rom_path in targets:
+            if job.get("cancel"):
+                job["status"] = "cancelled"
+                break
+            display_name = os.path.splitext(os.path.basename(rom_path))[0]
+            job["current"] = display_name
+            data, matched, _url = _download_artwork(repository, artwork_name_candidates(display_name))
+            if data:
+                image_name = "lan-" + hashlib.sha1(os.path.relpath(rom_path, folder).encode()).hexdigest() + ".png"
+                image_relative = os.path.join("images", image_name)
+                destination = os.path.join(folder, image_relative)
+                temporary = destination + ".tmp"
+                with open(temporary, "wb") as output:
+                    output.write(data)
+                os.replace(temporary, destination)
+                additions.append((rom_path, image_relative, matched or display_name))
+                job["downloaded"] += 1
+            else:
+                job["missing"] += 1
+            job["processed"] += 1
+            job["updated"] = int(time.time() * 1000)
+            time.sleep(0.1)
+        if additions:
+            _write_gamelist(system, additions)
+        if job["status"] != "cancelled":
+            job["status"] = "complete"
+    except Exception as error:
+        job["status"] = "failed"
+        job["errors"].append(str(error))
+    finally:
+        job["current"] = ""
+        job["finished"] = int(time.time() * 1000)
+
+
+def start_artwork_job(system, limit=0):
+    global ARTWORK_JOB
+    if system not in ARTWORK_REPOSITORIES or system not in SYSTEMS:
+        raise ValueError("This console does not have a configured artwork source.")
+    if not os.path.isdir(os.path.join(ROMS_ROOT, system)):
+        raise ValueError("That console directory is not available.")
+    if native_game_status()["nativeGameRunning"]:
+        raise RuntimeError("Stop the HDMI game before fetching artwork.")
+    limit = max(0, min(int(limit or 0), 10000))
+    with ARTWORK_LOCK:
+        if ARTWORK_JOB and ARTWORK_JOB.get("status") in {"queued", "running"}:
+            raise RuntimeError("Another artwork job is already running.")
+        ARTWORK_JOB = {"id": uuid.uuid4().hex, "status": "queued", "cancel": False,
+                       "system": system, "total": 0, "processed": 0, "downloaded": 0,
+                       "missing": 0, "errors": [], "current": ""}
+        threading.Thread(target=_artwork_worker, args=(ARTWORK_JOB, system, limit), daemon=True).start()
+        return dict(ARTWORK_JOB)
+
+
+def artwork_status():
+    with ARTWORK_LOCK:
+        return dict(ARTWORK_JOB) if ARTWORK_JOB else {"status": "idle"}
+
+
+def artwork_systems():
+    return [{"system": system, "name": SYSTEMS[system][1]}
+            for system in sorted(ARTWORK_REPOSITORIES, key=lambda item: SYSTEMS[item][1])
+            if system in SYSTEMS and os.path.isdir(os.path.join(ROMS_ROOT, system))]
+
+
+def cancel_artwork_job():
+    with ARTWORK_LOCK:
+        if not ARTWORK_JOB or ARTWORK_JOB.get("status") not in {"queued", "running"}:
+            return dict(ARTWORK_JOB) if ARTWORK_JOB else {"status": "idle"}
+        ARTWORK_JOB["cancel"] = True
+        return dict(ARTWORK_JOB)
 
 
 def _state_game_key(game):
@@ -286,6 +499,12 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(payload)
             return
+        if parsed.path == "/api/artwork/status":
+            self._json_response(200, artwork_status())
+            return
+        if parsed.path == "/api/artwork/systems":
+            self._json_response(200, artwork_systems())
+            return
         if parsed.path == "/api/states":
             game = urllib.parse.parse_qs(parsed.query).get("game", [""])[0]
             payload = json.dumps(list_states(game)).encode()
@@ -346,6 +565,25 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         request_path = urllib.parse.urlparse(self.path).path
+        if request_path == "/api/artwork/start":
+            if self.headers.get("X-LAN-Batocera-Action") != "fetch-artwork":
+                self._json_response(403, {"error": "Explicit artwork confirmation is required."})
+                return
+            try:
+                request = self._json_request()
+                self._json_response(202, start_artwork_job(request.get("system", ""),
+                                                           request.get("limit", 0)))
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(400, {"error": str(error) or "Could not start artwork fetch."})
+            except RuntimeError as error:
+                self._json_response(409, {"error": str(error)})
+            return
+        if request_path == "/api/artwork/cancel":
+            if self.headers.get("X-LAN-Batocera-Action") != "cancel-artwork":
+                self._json_response(403, {"error": "Explicit cancellation is required."})
+                return
+            self._json_response(202, cancel_artwork_job())
+            return
         if request_path == "/api/session-stop":
             if self.headers.get("X-LAN-Batocera-Action") != "stop-native-game":
                 self._json_response(403, {"error": "Explicit stop confirmation is required."})

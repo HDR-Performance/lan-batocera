@@ -41,6 +41,18 @@ browser downloads it from the upstream CDN at runtime.
 The FileBrowser Quantum binary is downloaded during installation and is not
 stored in this repository.
 
+## Libretro Thumbnails
+
+- Project: [libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)
+- Credit: the Libretro project, thumbnail repository maintainers, and artwork
+  contributors
+- Use here: the optional **Get Artwork** action downloads matching box-art PNGs
+  directly from system-specific Libretro thumbnail repositories at runtime.
+
+LAN Batocera does not bundle or redistribute the thumbnail collections. Artwork
+and game imagery may remain copyrighted by their respective rights holders;
+users are responsible for ensuring their use is permitted in their jurisdiction.
+
 ## Platform and standard-library components
 
 The project uses Batocera's bundled Python 3 runtime and Python standard
