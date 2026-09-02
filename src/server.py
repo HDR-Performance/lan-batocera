@@ -203,6 +203,24 @@ def artwork_title_key(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", title.casefold())
 
 
+def artwork_title_keys(name: str) -> list[str]:
+    title = os.path.splitext(os.path.basename(name))[0]
+    title = re.sub(r"\s*#\s*(N64|SNES|NES|GBA|GBC|GB|32X|MD|SMS|GG)\s*$", "", title,
+                   flags=re.IGNORECASE)
+    title = re.sub(r"^\d{3,4}\s*-\s*", "", title)
+    title = re.sub(r"\s*[\[(].*?[\])]", "", title).strip()
+    aliases = [title, re.sub(r"\b(?:sega\s*)?32x\b", "", title,
+                             flags=re.IGNORECASE).strip(" -")]
+    if " - " in title and re.search(r"\bpresents\b", title.split(" - ", 1)[0], re.IGNORECASE):
+        aliases.append(title.split(" - ", 1)[1])
+    keys = []
+    for alias in aliases:
+        key = re.sub(r"[^a-z0-9]+", "", alias.casefold())
+        if key and key not in keys:
+            keys.append(key)
+    return keys
+
+
 class _ArtworkListingParser(html.parser.HTMLParser):
     def __init__(self):
         super().__init__()
@@ -226,22 +244,26 @@ def artwork_catalog(repository: str, opener=urllib.request.urlopen) -> dict[str,
     parser.feed(data.decode("utf-8", "replace"))
     choices = {}
     for name in parser.names:
-        key = artwork_title_key(name)
-        if not key:
+        keys = artwork_title_keys(name)
+        if not keys:
             continue
-        rank = (0 if "(USA" in name else 1 if "(World" in name else
-                2 if "(Europe" in name else 3 if "(Japan" in name else 4)
-        if key not in choices or rank < choices[key][0]:
-            choices[key] = (rank, name)
+        variant_rank = 1 if re.search(r"\((?:beta|proto|prototype|alt)(?:\s|\))", name,
+                                      re.IGNORECASE) else 0
+        region_rank = (0 if "(USA" in name else 1 if "(World" in name else
+                       2 if "(Europe" in name else 3 if "(Japan" in name else 4)
+        rank = (variant_rank, region_rank)
+        for key in keys:
+            if key not in choices or rank < choices[key][0]:
+                choices[key] = (rank, name)
     return {key: value[1] for key, value in choices.items()}
 
 
 def _download_artwork(repository: str, candidates: list[str],
                       opener=urllib.request.urlopen) -> tuple[bytes | None, str, str]:
+    repository_path = urllib.parse.quote(repository.replace("_", " "))
     for candidate in candidates:
         encoded = urllib.parse.quote(candidate + ".png", safe="'(),!$-._~")
-        url = (f"https://raw.githubusercontent.com/libretro-thumbnails/{repository}/master/"
-               f"Named_Boxarts/{encoded}")
+        url = f"https://thumbnails.libretro.com/{repository_path}/Named_Boxarts/{encoded}"
         request = urllib.request.Request(url, headers={"User-Agent": ARTWORK_USER_AGENT})
         try:
             with opener(request, timeout=ARTWORK_DOWNLOAD_TIMEOUT_SECONDS) as response:
@@ -318,7 +340,8 @@ def _artwork_worker(job, system, limit):
             display_name = os.path.splitext(os.path.basename(rom_path))[0]
             job["current"] = display_name
             candidates = artwork_name_candidates(display_name)
-            catalog_match = catalog.get(artwork_title_key(display_name))
+            catalog_match = next((catalog[key] for key in artwork_title_keys(display_name)
+                                  if key in catalog), None)
             if catalog_match:
                 candidates.insert(0, catalog_match)
             data, matched, _url = _download_artwork(repository, candidates)
@@ -330,7 +353,7 @@ def _artwork_worker(job, system, limit):
                 with open(temporary, "wb") as output:
                     output.write(data)
                 os.replace(temporary, destination)
-                additions.append((rom_path, image_relative, matched or display_name))
+                additions.append((rom_path, image_relative, display_name))
                 job["downloaded"] += 1
             else:
                 job["missing"] += 1

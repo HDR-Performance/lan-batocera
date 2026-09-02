@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.7.0**. Releases follow Semantic Versioning; contribution
+Current release: **v1.7.1**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -119,6 +119,11 @@ do not resemble catalog names may remain unmatched. The feature deliberately
 does not guess among ambiguous results or overwrite metadata supplied by another
 scraper.
 
+Sega 32X matching recognizes common GoodTools-style `32X` filename suffixes and
+catalog presentation prefixes. Downloads use the same Libretro thumbnail server
+as the catalog, preventing missing images when its GitHub mirror is temporarily
+out of sync. Released artwork is preferred over beta or alternate variants.
+
 ## Supported hardware
 
 The installer targets Batocera v38 or newer on 64-bit ARM (`aarch64`), including
@@ -174,7 +179,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.7.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.7.1/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh

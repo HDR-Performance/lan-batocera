@@ -37,12 +37,31 @@ class ArtworkTests(unittest.TestCase):
         self.assertEqual(server.artwork_title_key("Banjo-Kazooie # N64.Z64"),
                          server.artwork_title_key("Banjo-Kazooie (USA).png"))
 
+    def test_sega_32x_suffix_does_not_prevent_artwork_match(self):
+        catalog_keys = server.artwork_title_keys("Virtua Fighter (World).png")
+        rom_keys = server.artwork_title_keys("Virtua Fighter 32X (5) [!].zip")
+        self.assertTrue(set(catalog_keys).intersection(rom_keys))
+
+    def test_sega_32x_catalog_presents_prefix_has_title_alias(self):
+        catalog_keys = server.artwork_title_keys(
+            "Golf Magazine Presents - 36 Great Holes Starring Fred Couples (Europe).png")
+        rom_keys = server.artwork_title_keys(
+            "36 Great Holes Starring Fred Couples 32X (E) [!].zip")
+        self.assertTrue(set(catalog_keys).intersection(rom_keys))
+
     def test_catalog_prefers_usa_when_multiple_regions_share_title(self):
         listing = (b'<a href="Banjo-Kazooie%20(Europe).png">EU</a>'
                    b'<a href="Banjo-Kazooie%20(USA).png">US</a>')
         catalog = server.artwork_catalog("Nintendo_-_Nintendo_64",
                                          lambda _request, timeout: FakeResponse(listing))
         self.assertEqual(catalog["banjokazooie"], "Banjo-Kazooie (USA)")
+
+    def test_catalog_prefers_released_artwork_over_beta_variant(self):
+        listing = (b'<a href="Virtua%20Fighter%20(Europe)%20(Beta).png">Beta</a>'
+                   b'<a href="Virtua%20Fighter%20(Europe).png">Release</a>')
+        catalog = server.artwork_catalog("Sega_-_32X",
+                                         lambda _request, timeout: FakeResponse(listing))
+        self.assertEqual(catalog["virtuafighter"], "Virtua Fighter (Europe)")
 
     def test_download_validates_png_and_encodes_filename(self):
         png = b"\x89PNG\r\n\x1a\nfixture"
@@ -55,7 +74,7 @@ class ArtworkTests(unittest.TestCase):
         data, matched, url = server._download_artwork("Example", ["Game (USA)"], opener)
         self.assertEqual(data, png)
         self.assertEqual(matched, "Game (USA)")
-        self.assertIn("Named_Boxarts/Game%20(USA).png", url)
+        self.assertEqual(url, "https://thumbnails.libretro.com/Example/Named_Boxarts/Game%20(USA).png")
         self.assertEqual(seen[0][1], 20)
 
     def test_gamelist_update_is_backed_up_and_preserves_metadata(self):
@@ -125,6 +144,7 @@ class ArtworkTests(unittest.TestCase):
                 self.assertEqual(job["downloaded"], 1)
                 listing = server.games()
                 self.assertIn("image", listing[0])
+                self.assertEqual(listing[0]["name"], "Game (USA)")
                 self.assertTrue(os.path.isfile(os.path.join(roms, listing[0]["image"])))
             finally:
                 server.ROMS_ROOT = original

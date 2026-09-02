@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-LAN_BATOCERA_VERSION="1.7.0"
+LAN_BATOCERA_VERSION="1.7.1"
 DEVICE_HOST="${1:-batocera.local}"
 SSH_USER="${SSH_USER:-root}"
 INSTALLER_URL="https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v${LAN_BATOCERA_VERSION}/standalone-install.sh"
