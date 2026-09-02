@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.6.1**. Releases follow Semantic Versioning; contribution
+Current release: **v1.7.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -48,6 +48,13 @@ search, per-browser favorites and recently played history, and returns to the
 library after EmulatorJS completes its exit and save cleanup. The responsive UI
 uses phone-sized touch targets and bottom navigation, desktop keyboard shortcuts,
 incremental card rendering, and automatic mobile/desktop EmulatorJS controls.
+Select **Updates** in the LAN library to compare the installed version with the
+official repository's latest stable GitHub release. When a newer release is
+available, the dialog links to its release notes and requires confirmation
+before installing the version-matched tagged installer. The update preserves
+ROMs, saves, artwork, browser settings, and existing file-manager credentials.
+Close any native HDMI game before updating; the LAN services restart
+automatically and the dialog reports completion after reconnecting.
 Desktop browsers default to EmulatorJS's **2xScaleHQ** GPU shader for a cleaner
 scaled image. Phones default to native filtering to protect battery life and
 frame rate. During play, open EmulatorJS's gear menu and change **Shader** to
@@ -167,7 +174,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.6.1/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.7.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh

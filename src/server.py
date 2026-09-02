@@ -20,8 +20,10 @@ import zipfile
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 try:
     from multiplayer import MultiplayerSessionRegistry
+    from update_manager import UpdateManager
 except ModuleNotFoundError:
     from src.multiplayer import MultiplayerSessionRegistry
+    from src.update_manager import UpdateManager
 
 WEB_ROOT = "/userdata/system/emulatorjs-lan/web"
 ROMS_ROOT = "/userdata/roms"
@@ -71,6 +73,9 @@ def project_version() -> str:
         if version:
             return version
     return "development"
+
+
+UPDATE_MANAGER = UpdateManager(project_version())
 
 SYSTEMS = {
     "nes": ("nes", "Nintendo Entertainment System", "Console", {".nes", ".zip"}),
@@ -694,6 +699,15 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/version":
             self._json_response(200, {"version": project_version()})
             return
+        if parsed.path == "/api/update/check":
+            try:
+                self._json_response(200, UPDATE_MANAGER.check())
+            except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as error:
+                self._json_response(502, {"error": str(error) or "Could not check GitHub."})
+            return
+        if parsed.path == "/api/update/status":
+            self._json_response(200, UPDATE_MANAGER.status())
+            return
         if parsed.path == "/api/session-status":
             payload = json.dumps(native_game_status()).encode()
             self.send_response(200)
@@ -776,6 +790,21 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         request_path = urllib.parse.urlparse(self.path).path
+        if request_path == "/api/update/install":
+            if self.headers.get("X-LAN-Batocera-Action") != "install-update":
+                self._json_response(403, {"error": "Explicit update confirmation is required."})
+                return
+            if native_game_running():
+                self._json_response(409, {"error": "Close the HDMI Batocera game before updating."})
+                return
+            try:
+                request = self._json_request()
+                self._json_response(202, UPDATE_MANAGER.start(request.get("version", "")))
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(400, {"error": str(error) or "Invalid update request."})
+            except (OSError, RuntimeError) as error:
+                self._json_response(502, {"error": str(error) or "Could not start the update."})
+            return
         if request_path == "/api/multiplayer/host":
             try:
                 request = self._json_request()
