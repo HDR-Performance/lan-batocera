@@ -63,17 +63,24 @@ single-column cover further on narrow screens.
 
 Open **Multiplayer Settings** in the library and choose one mode:
 
-- **Host** creates a synchronized two-player room whenever this device launches
-  a game. The host is Player 1 and retains restart, pause, save, and exit control.
-- **Join** waits for an active host, then automatically opens the identical game
-  and joins as Player 2.
+- **Host · Player 1** names a LAN lobby and creates it when this device launches
+  a game. The host retains restart, pause, save, and exit control.
+- **Join · Player 2** or **Join · Player 3** lists the open lobbies on this
+  Batocera device. Choose a lobby to open the host's exact game in the selected
+  controller slot. Player 3 becomes available after Player 2 joins.
 - **Solo** disables multiplayer and launches games normally.
 
-The discovery layer preserves the host's exact LAN origin so both browsers use
-the same room domain even when the device is reachable by both IP address and
-`.local` name. Host sessions expire after 20 seconds without a heartbeat.
+Each browser runs the same emulation and EmulatorJS netplay synchronizes the
+game state and inputs. This is not video mirroring: every player gets the same
+game view without sending a video stream across the LAN, while each phone or PC
+keeps its own assigned controls. The discovery layer preserves the host's exact
+LAN origin so all browsers use the same room domain even when the device is
+reachable by both IP address and `.local` name. Host sessions and disconnected
+guest slots expire after 20 seconds without a heartbeat.
 Every configured LAN Batocera system exposes the feature, but EmulatorJS netplay
-is experimental and individual cores must be verified with two real browsers.
+is experimental and individual cores must be verified with real browsers. A
+game and its emulator core must support three players before Player 3 can be
+used.
 Synchronization uses a Pi-local ARM64 build of the Apache-licensed EmulatorJS
 netplay server on TCP port 4000. It is pinned to upstream commit
 `4090ca7bda795a8b7a7596f4d41a4605b515d9c5`; the reproducible GitHub Actions

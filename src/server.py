@@ -622,6 +622,9 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/multiplayer/session":
             self._json_response(200, MULTIPLAYER_SESSIONS.current())
             return
+        if parsed.path == "/api/multiplayer/sessions":
+            self._json_response(200, MULTIPLAYER_SESSIONS.sessions())
+            return
         if parsed.path == "/api/artwork/status":
             self._json_response(200, artwork_status())
             return
@@ -704,7 +707,9 @@ class Handler(SimpleHTTPRequestHandler):
         if request_path == "/api/multiplayer/host":
             try:
                 request = self._json_request()
-                self._json_response(201, MULTIPLAYER_SESSIONS.host(request.get("game")))
+                self._json_response(201, MULTIPLAYER_SESSIONS.host(
+                    request.get("game"), request.get("lobbyName"),
+                    request.get("maxPlayers", 3)))
             except (ValueError, TypeError, json.JSONDecodeError) as error:
                 self._json_response(400, {"error": str(error)})
             return
@@ -712,10 +717,19 @@ class Handler(SimpleHTTPRequestHandler):
             try:
                 request = self._json_request()
                 result = MULTIPLAYER_SESSIONS.heartbeat(
-                    request.get("id", ""), request.get("token", ""), request.get("role", ""))
+                    request.get("id", ""), request.get("token", ""),
+                    request.get("role", ""), request.get("player", 2))
                 self._json_response(200, result)
             except PermissionError as error:
                 self._json_response(403, {"error": str(error)})
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(409, {"error": str(error)})
+            return
+        if request_path == "/api/multiplayer/join":
+            try:
+                request = self._json_request()
+                self._json_response(200, MULTIPLAYER_SESSIONS.join(
+                    request.get("id", ""), request.get("player", 2)))
             except (ValueError, TypeError, json.JSONDecodeError) as error:
                 self._json_response(409, {"error": str(error)})
             return
