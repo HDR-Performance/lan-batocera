@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.5.1**. Releases follow Semantic Versioning; contribution
+Current release: **v1.5.2**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -147,7 +147,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.1/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.2/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
@@ -263,7 +263,12 @@ N64 and C64 launches bypass EmulatorJS's internal ROM/core cache and use a
 size-and-modification revision in the ROM URL. Replacing a ROM at the same path
 therefore downloads the new file without changing its save-state identity.
 These systems also default to native video; mobile N64 uses the legacy core for
-broader WebGL compatibility.
+broader WebGL compatibility. N64 and C64 also ignore stale EmulatorJS settings.
+Desktop browsers start games automatically. Mobile browsers receive one clearly
+named **Start** button because mobile Safari and other phone browsers require a
+fresh interaction before emulator audio and execution can begin; this avoids
+the frozen auto-start and `undefined` resume screen that previously required
+using EmulatorJS's Restart command.
 
 The **Controllers** menu provides pre-mapped Xbox, PlayStation, and Nintendo
 Switch layouts. A selection is saved in that browser and applied before

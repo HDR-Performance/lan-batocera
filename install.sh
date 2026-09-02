@@ -2,11 +2,12 @@
 set -euo pipefail
 
 APP_ROOT="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_VERSION="$(tr -d '\r\n' < "$APP_ROOT/VERSION")"
 ARCADE_ROOT=/userdata/system/emulatorjs-lan
 FB_ROOT=/userdata/system/filebrowser-quantum
 SERVICE_ROOT=/userdata/system/services
 NETPLAY_ROOT=/userdata/system/emulatorjs-netplay
-NETPLAY_URL="https://github.com/HDR-Performance/lan-batocera/releases/download/v$(cat "$APP_ROOT/VERSION")/emulatorjs-netplay-server-linux-arm64"
+NETPLAY_URL="https://github.com/HDR-Performance/lan-batocera/releases/download/v${PROJECT_VERSION}/emulatorjs-netplay-server-linux-arm64"
 FB_VERSION=v1.5.3-stable
 FB_URL="https://github.com/gtsteffaniak/filebrowser/releases/download/${FB_VERSION}/linux-arm64-filebrowser"
 
@@ -76,5 +77,5 @@ echo "Arcade:      http://${IP_ADDRESS}:8080"
 echo "File manager: http://${IP_ADDRESS}:8081"
 echo "Friendly arcade address: http://batocera.local:8080"
 echo "Friendly ROM address:    http://batoceraroms.local:8081"
-echo "LAN Batocera version:     $(cat "$APP_ROOT/VERSION")"
+echo "LAN Batocera version:     ${PROJECT_VERSION}"
 echo "Installation complete."

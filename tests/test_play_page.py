@@ -9,7 +9,8 @@ class PlayPageTests(unittest.TestCase):
     def test_auto_starts_and_offers_save_or_skip_exit(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
             page = source.read()
-        self.assertIn("window.EJS_startOnLoaded=true", page)
+        self.assertIn("window.EJS_startOnLoaded=!coarsePointer", page)
+        self.assertIn("window.EJS_startButtonName='Start '+name", page)
         self.assertIn("Save State &amp; Exit", page)
         self.assertIn("Exit Without Saving", page)
         self.assertIn("button.ejs_menu_button", page)
@@ -75,6 +76,7 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("coarsePointer||compatibilityCore?'disabled':'2xScaleHQ.glslp'", page)
         self.assertIn("core==='n64'||core==='c64'", page)
         self.assertIn("window.EJS_cacheConfig={enabled:!compatibilityCore", page)
+        self.assertIn("window.EJS_disableLocalStorage=compatibilityCore", page)
         self.assertIn("window.EJS_forceLegacyCores=core==='n64'&&coarsePointer", page)
         self.assertIn("window.EJS_defaultOptions={shader:defaultShader}", page)
         self.assertIn("Video: 2× HQ", page)

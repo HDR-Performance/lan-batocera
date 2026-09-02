@@ -1,6 +1,6 @@
 *.sh text eol=lf
+VERSION text eol=lf
 services/* text eol=lf
-*.py text eol=lf
-*.yaml text eol=lf
-*.html text eol=lf
-*.md text eol=lf
+src/*.py text eol=lf
+web/*.html text eol=lf
+web/*.js text eol=lf

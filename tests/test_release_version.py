@@ -16,6 +16,8 @@ class ReleaseVersionTests(unittest.TestCase):
     def test_installer_copies_and_reports_version(self):
         with open(os.path.join(REPOSITORY_ROOT, "install.sh"), encoding="utf-8") as installer_file:
             installer = installer_file.read()
+        self.assertIn("tr -d '\\r\\n'", installer)
+        self.assertIn("v${PROJECT_VERSION}", installer)
         self.assertIn('install -m 0644 "$APP_ROOT/VERSION" "$ARCADE_ROOT/VERSION"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/controller-presets.js"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/touch-layout.js"', installer)
