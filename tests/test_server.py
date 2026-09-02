@@ -87,7 +87,7 @@ class ArcadeScannerTests(unittest.TestCase):
         }
         self.assertEqual(extensions, expected_extensions)
 
-    def test_scans_psx_cue_without_duplicate_bin_entry(self):
+    def test_scans_psx_bin_without_duplicate_cue_entry(self):
         with tempfile.TemporaryDirectory() as roms:
             folder = os.path.join(roms, "psx")
             os.makedirs(folder)
@@ -102,8 +102,26 @@ class ArcadeScannerTests(unittest.TestCase):
                 server.ROMS_ROOT = previous_root
 
         self.assertEqual([game["name"] for game in games], ["Ridge Racer", "Standalone"])
+        self.assertEqual([game["path"] for game in games], [
+            "psx/Ridge Racer.bin", "psx/Standalone.bin"
+        ])
         self.assertTrue(all(game["core"] == "psx" for game in games))
         self.assertTrue(all(game["systemName"] == "Sony PlayStation" for game in games))
+
+    def test_scans_standalone_psx_cue_when_no_matching_bin_exists(self):
+        with tempfile.TemporaryDirectory() as roms:
+            folder = os.path.join(roms, "psx")
+            os.makedirs(folder)
+            with open(os.path.join(folder, "Multi Track.cue"), "wb") as output:
+                output.write(b"fixture")
+            previous_root = server.ROMS_ROOT
+            server.ROMS_ROOT = roms
+            try:
+                games = server.games()
+            finally:
+                server.ROMS_ROOT = previous_root
+
+        self.assertEqual([game["path"] for game in games], ["psx/Multi Track.cue"])
 
     def test_psx_supports_batocera_disc_formats(self):
         self.assertEqual(server.SYSTEMS["psx"][3], {

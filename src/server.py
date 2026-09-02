@@ -107,10 +107,10 @@ SYSTEMS = {
 
 
 def is_primary_rom_file(system, filename, directory_files):
-    if system != "psx" or os.path.splitext(filename)[1].lower() != ".bin":
+    if system != "psx" or os.path.splitext(filename)[1].lower() != ".cue":
         return True
-    cue_filename = os.path.splitext(filename)[0].lower() + ".cue"
-    return cue_filename not in directory_files
+    bin_filename = os.path.splitext(filename)[0].lower() + ".bin"
+    return bin_filename not in directory_files
 
 
 def safe_join(root, relative):
