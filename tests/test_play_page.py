@@ -55,7 +55,8 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("if(gameStartHandled)return", page)
         self.assertNotIn("document.body.append(loader);prepareStartedGame()", page)
         self.assertNotIn("waitForMenuButton('Restart')", page)
-        self.assertNotIn("restart.click()", page)
+        self.assertIn("if(!confirm('Restart this game from the beginning?", page)
+        self.assertIn("restart.click()", page)
         self.assertNotIn("startupRestartState", page)
 
     def test_rom_revision_bypasses_stale_emulatorjs_cache(self):
@@ -97,6 +98,10 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn('aria-controls="mobileToolsPanel"', page)
         self.assertIn("setMobileToolsOpen", page)
         self.assertIn("mobile-tools-panel.open", page)
+        self.assertIn('id="restartGame"', page)
+        self.assertIn("function protectMobileRestart()", page)
+        self.assertIn("restart.hidden=true", page)
+        self.assertIn("Restart this game from the beginning?", page)
 
     def test_screen_lock_pauses_autosaves_and_requires_resume(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
