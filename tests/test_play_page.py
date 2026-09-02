@@ -35,6 +35,13 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn('class="load-choice" type="radio"', page)
         self.assertIn("/api/states/data", page)
         self.assertIn("method:'DELETE'", page)
+        self.assertIn('id="importStateFile" type="file"', page)
+        self.assertIn('id="downloadState"', page)
+        self.assertIn('id="downloadStates"', page)
+        self.assertIn("/api/states/export", page)
+        self.assertIn("file.arrayBuffer()", page)
+        self.assertIn("window.EJS_emulator.gameManager.loadState(bytes)", page)
+        self.assertIn("MAX_IMPORTED_STATE_BYTES=64*1024*1024", page)
 
     def test_native_hdmi_game_blocks_loader(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:

@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import html.parser
+import io
 import json
 import mimetypes
 import os
@@ -15,6 +16,7 @@ import urllib.error
 import urllib.request
 import uuid
 import xml.etree.ElementTree as ET
+import zipfile
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 try:
     from multiplayer import MultiplayerSessionRegistry
@@ -512,6 +514,33 @@ def state_file(game, state_id, extension):
     return filename
 
 
+def _portable_state_name(name, state_id):
+    clean_name = re.sub(r"[^A-Za-z0-9._ -]+", "_", str(name or "Saved state")).strip(" .")
+    return f"{clean_name or 'Saved state'}-{state_id[:8]}.state"
+
+
+def export_states(game, state_ids):
+    requested_ids = list(dict.fromkeys(str(item) for item in state_ids))
+    metadata = {item["id"]: item for item in list_states(game)}
+    selected = [metadata[state_id] for state_id in requested_ids if state_id in metadata]
+    if not selected:
+        raise FileNotFoundError
+    if len(selected) == 1:
+        item = selected[0]
+        with open(state_file(game, item["id"], ".state"), "rb") as source:
+            return "application/octet-stream", _portable_state_name(item.get("name"), item["id"]), source.read()
+    archive = io.BytesIO()
+    manifest = {"format": "lan-batocera-states-v1", "game": game, "states": []}
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for item in selected:
+            filename = _portable_state_name(item.get("name"), item["id"])
+            bundle.write(state_file(game, item["id"], ".state"), filename)
+            manifest["states"].append({"file": filename, "name": item.get("name", "Saved state"),
+                                       "created": item.get("created", 0), "size": item.get("size", 0)})
+        bundle.writestr("lan-batocera-manifest.json", json.dumps(manifest, indent=2))
+    return "application/zip", "lan-batocera-save-states.zip", archive.getvalue()
+
+
 def native_game_running(proc_root="/proc"):
     try:
         processes = os.listdir(proc_root)
@@ -693,6 +722,21 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
             self.wfile.write(payload)
+            return
+        if parsed.path == "/api/states/export":
+            query = urllib.parse.parse_qs(parsed.query)
+            game = query.get("game", [""])[0]
+            state_ids = [item for value in query.get("ids", []) for item in value.split(",") if item]
+            try:
+                content_type, filename, payload = export_states(game, state_ids)
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            except (FileNotFoundError, OSError):
+                self.send_error(404, "Save state not found")
             return
         if parsed.path in ("/api/states/data", "/api/states/screenshot"):
             query = urllib.parse.parse_qs(parsed.query)

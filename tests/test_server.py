@@ -1,8 +1,11 @@
 import importlib.util
 import base64
+import io
+import json
 import os
 import tempfile
 import unittest
+import zipfile
 from unittest import mock
 
 
@@ -86,6 +89,31 @@ class ArcadeScannerTests(unittest.TestCase):
 
 
 class SaveStateTests(unittest.TestCase):
+    def test_exports_one_state_directly_and_multiple_states_as_portable_zip(self):
+        original_root, original_native = server.STATE_ROOT, server.BATOCERA_SAVES_ROOT
+        with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as native:
+            server.STATE_ROOT, server.BATOCERA_SAVES_ROOT = root, native
+            try:
+                game = "n64:n64/mario-kart-64.zip"
+                first = server.save_state(game, "Race 1", base64.b64encode(b"state-one").decode())
+                second = server.save_state(game, "Race 2", base64.b64encode(b"state-two").decode())
+                content_type, filename, payload = server.export_states(game, [first["id"]])
+                self.assertEqual(content_type, "application/octet-stream")
+                self.assertTrue(filename.endswith(".state"))
+                self.assertEqual(payload, b"state-one")
+                content_type, filename, payload = server.export_states(
+                    game, [first["id"], second["id"]])
+                self.assertEqual(content_type, "application/zip")
+                self.assertEqual(filename, "lan-batocera-save-states.zip")
+                with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                    manifest = json.loads(archive.read("lan-batocera-manifest.json"))
+                    self.assertEqual(manifest["format"], "lan-batocera-states-v1")
+                    self.assertEqual(len(manifest["states"]), 2)
+                    self.assertEqual({archive.read(item["file"]) for item in manifest["states"]},
+                                     {b"state-one", b"state-two"})
+            finally:
+                server.STATE_ROOT, server.BATOCERA_SAVES_ROOT = original_root, original_native
+
     def test_every_lan_system_can_store_load_and_delete_browser_states(self):
         original_root, original_native = server.STATE_ROOT, server.BATOCERA_SAVES_ROOT
         with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as native:

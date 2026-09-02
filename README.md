@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.5.9**. Releases follow Semantic Versioning; contribution
+Current release: **v1.6.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -147,7 +147,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.9/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.6.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
@@ -250,7 +250,11 @@ client browser needs internet access when starting a game. ROM data is served by
 the Batocera device over the LAN. Controllers connect to the browser device.
 Every supported LAN console exposes **Save / Load** in the in-game menu and uses
 the same saved-state manager, including manual saves, automatic screen-off
-saves, previews, loading, and multi-delete. Compatible libretro systems also
+saves, previews, loading, portable downloads, local-file import, and
+multi-download or multi-delete. One state downloads as a `.state` file;
+multiple selected states download as a ZIP with a manifest. **Import & Load
+State** accepts a local `.state` file from desktop and mobile file pickers,
+stores it for the active game, and loads it immediately. Compatible libretro systems also
 mirror saves into Batocera's native numbered state slots. N64 and C64 remain
 browser-only because this Pi's Batocera defaults use different emulator cores;
 copying those state files into native slots would label incompatible data as a
