@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.5.3**. Releases follow Semantic Versioning; contribution
+Current release: **v1.5.4**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -147,7 +147,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.3/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.4/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
@@ -291,6 +291,11 @@ from the in-game controller menu to tap and drag the top, bottom, left, or right
 control group. The selected group can be resized from 70% to 150%. Portrait and
 landscape layouts are stored separately in that browser, and **Reset Layout**
 restores the current orientation without changing the other one.
+
+When a physical controller is already connected as a game starts, LAN Batocera
+reconciles it with EmulatorJS after initialization and assigns it to Player 1.
+This avoids a controller-detection race that could leave N64 analog sticks
+unresponsive even though an Xbox, PlayStation, or Switch preset was selected.
 
 The game page includes a large **Fullscreen** button with safe-area spacing for
 phone screens. Fullscreen must be started from that tap because browsers require

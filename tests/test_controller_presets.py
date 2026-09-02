@@ -63,6 +63,16 @@ class ControllerPresetTests(unittest.TestCase):
             self.assertIn(axis, presets)
         self.assertIn("RIGHT_STICK", presets)
 
+    def test_running_emulator_receives_preset_and_connected_gamepad(self):
+        presets = self.read_file("web/controller-presets.js")
+        play_page = self.read_file("web/play.html")
+        self.assertIn("function synchronizeEmulator(emulator, preset)", presets)
+        self.assertIn("emulator.defaultControllers = copyControls(controls)", presets)
+        self.assertIn("emulator.controls = controls", presets)
+        self.assertIn("emulator.gamepadSelection[playerIndex]", presets)
+        self.assertIn("synchronizeControllerPreset(preset)", play_page)
+        self.assertIn("addEventListener('gamepadconnected'", play_page)
+
     def test_touch_layout_editor_is_loaded_before_emulator(self):
         play_page = self.read_file("web/play.html")
         self.assertIn('/touch-layout.js', play_page)

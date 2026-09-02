@@ -93,9 +93,38 @@
     }
   }
 
+  function copyControls(controls) {
+    return JSON.parse(JSON.stringify(controls));
+  }
+
+  function synchronizeEmulator(emulator, preset) {
+    if (!emulator || !preset?.controls) {
+      return false;
+    }
+
+    const controls = copyControls(preset.controls);
+    emulator.defaultControllers = copyControls(controls);
+    emulator.controls = controls;
+    emulator.setupKeys?.();
+    emulator.checkGamepadInputs?.();
+
+    if (!Array.isArray(emulator.gamepadSelection)) {
+      return true;
+    }
+
+    const gamepads = Array.from(emulator.gamepad?.gamepads || []).filter(Boolean);
+    const selections = gamepads.map((gamepad) => `${gamepad.id}_${gamepad.index}`);
+    for (let playerIndex = 0; playerIndex < emulator.gamepadSelection.length; playerIndex += 1) {
+      emulator.gamepadSelection[playerIndex] = selections[playerIndex] || '';
+    }
+    emulator.updateGamepadLabels?.();
+    return true;
+  }
+
   window.LanControllerPresets = Object.freeze({
     connectedGamepads,
     getPreset,
+    synchronizeEmulator,
     presets
   });
 })();
