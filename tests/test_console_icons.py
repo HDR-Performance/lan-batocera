@@ -27,6 +27,17 @@ class ConsoleIconTests(unittest.TestCase):
         self.assertIn("firstGroup(game.name)===activeLetter", self.index)
         self.assertIn("view!=='all'", self.index)
 
+    def test_primary_navigation_keeps_updates_in_header_and_tools_grouped(self):
+        header_start = self.index.index('<header class="page-header">')
+        navigation_start = self.index.index('<nav class="views"')
+        navigation_end = self.index.index('</nav>', navigation_start)
+        self.assertLess(header_start, navigation_start)
+        self.assertLess(self.index.index('id="updateOpen"'), navigation_start)
+        navigation = self.index[navigation_start:navigation_end]
+        self.assertIn('<details class="tools-menu">', navigation)
+        self.assertEqual(navigation.count('<button class="view'), 3)
+        self.assertNotIn('id="updateOpen"', navigation)
+
 
 if __name__ == "__main__":
     unittest.main()
