@@ -27,6 +27,7 @@ class MultiplayerSessionRegistry:
             "lobbyName": lobby_name,
             "maxPlayers": max_players,
             "game": dict(game),
+            "ready": False,
             "playerHeartbeats": {1: now},
             "updated": now,
         }
@@ -38,11 +39,22 @@ class MultiplayerSessionRegistry:
         player = self._validate_guest_player(player)
         with self._lock:
             session = self._get_active_session(session_id)
+            if not session["ready"]:
+                raise ValueError("The host is still preparing the synchronized game room.")
             if player > session["maxPlayers"]:
                 raise ValueError("That lobby does not support the selected player.")
             if player > 2 and player - 1 not in session["playerHeartbeats"]:
                 raise ValueError(f"Player {player - 1} must join before Player {player}.")
             session["playerHeartbeats"][player] = self._clock()
+            return self._public(session)
+
+    def mark_ready(self, session_id, token):
+        with self._lock:
+            session = self._get_active_session(session_id)
+            if session["token"] != token:
+                raise PermissionError("Host authorization failed.")
+            session["ready"] = True
+            session["updated"] = self._clock()
             return self._public(session)
 
     def heartbeat(self, session_id, token, role, player=2):
@@ -65,7 +77,8 @@ class MultiplayerSessionRegistry:
     def sessions(self):
         with self._lock:
             self._remove_expired_sessions()
-            return [self._public(session) for session in self._sessions.values()]
+            return [self._public(session) for session in self._sessions.values()
+                    if session["ready"]]
 
     def current(self):
         sessions = self.sessions()
@@ -144,6 +157,7 @@ class MultiplayerSessionRegistry:
             "game": dict(session["game"]),
             "players": len(joined_players),
             "joinedPlayers": joined_players,
+            "ready": session["ready"],
         }
         if include_token:
             response["token"] = session["token"]

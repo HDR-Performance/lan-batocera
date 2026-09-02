@@ -26,6 +26,8 @@ class MultiplayerRegistryTests(unittest.TestCase):
         hosted = self.registry.host(self.game, "Family Lobby", 3)
         self.assertEqual(hosted["players"], 1)
         self.assertEqual(hosted["lobbyName"], "Family Lobby")
+        self.assertEqual(self.registry.sessions(), [])
+        self.registry.mark_ready(hosted["id"], hosted["token"])
         joined = self.registry.join(hosted["id"], 2)
         self.assertEqual(joined["players"], 2)
         joined = self.registry.join(hosted["id"], 3)
@@ -35,12 +37,15 @@ class MultiplayerRegistryTests(unittest.TestCase):
 
     def test_player_three_waits_for_player_two(self):
         hosted = self.registry.host(self.game, "Ordered Lobby", 3)
+        self.registry.mark_ready(hosted["id"], hosted["token"])
         with self.assertRaisesRegex(ValueError, "Player 2 must join"):
             self.registry.join(hosted["id"], 3)
 
     def test_multiple_named_lobbies_can_be_discovered(self):
-        self.registry.host(self.game, "Lobby One", 2)
-        self.registry.host(self.game, "Lobby Two", 3)
+        first = self.registry.host(self.game, "Lobby One", 2)
+        second = self.registry.host(self.game, "Lobby Two", 3)
+        self.registry.mark_ready(first["id"], first["token"])
+        self.registry.mark_ready(second["id"], second["token"])
         self.assertEqual([item["lobbyName"] for item in self.registry.sessions()],
                          ["Lobby One", "Lobby Two"])
 
@@ -55,6 +60,8 @@ class MultiplayerRegistryTests(unittest.TestCase):
             self.registry.heartbeat(hosted["id"], "wrong", "host")
         with self.assertRaises(PermissionError):
             self.registry.close(hosted["id"], "wrong")
+        with self.assertRaises(PermissionError):
+            self.registry.mark_ready(hosted["id"], "wrong")
 
 
 class MultiplayerUiTests(unittest.TestCase):
@@ -86,6 +93,8 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn("room.room_name===multiplayerRoomName", page)
         self.assertIn("emulator.netplay.joinRoom(roomId,room.room_name)", page)
         self.assertIn("waitForNetplayRoom", page)
+        self.assertIn("/api/multiplayer/ready", page)
+        self.assertIn("EmulatorJS could not create a synchronized room", page)
         self.assertIn("window.EJS_emulator?.pause?.();$('multiplayerGameStatus')", page)
         self.assertIn("emulator.netplayMenu.style.display='none'", page)
         self.assertIn("Player 1", page)

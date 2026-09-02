@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.5.6**. Releases follow Semantic Versioning; contribution
+Current release: **v1.5.7**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -147,7 +147,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.6/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.5.7/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh

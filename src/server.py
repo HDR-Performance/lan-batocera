@@ -753,6 +753,17 @@ class Handler(SimpleHTTPRequestHandler):
             except (ValueError, TypeError, json.JSONDecodeError) as error:
                 self._json_response(409, {"error": str(error)})
             return
+        if request_path == "/api/multiplayer/ready":
+            try:
+                request = self._json_request()
+                result = MULTIPLAYER_SESSIONS.mark_ready(
+                    request.get("id", ""), request.get("token", ""))
+                self._json_response(200, result)
+            except PermissionError as error:
+                self._json_response(403, {"error": str(error)})
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                self._json_response(409, {"error": str(error)})
+            return
         if request_path == "/api/multiplayer/join":
             try:
                 request = self._json_request()
