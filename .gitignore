@@ -2,6 +2,8 @@
 *.db
 *.log
 *.tar.gz
+lan-batocera-v*.zip
+release-assets/
 config.yaml
 credentials.txt
 __pycache__/

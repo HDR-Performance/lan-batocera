@@ -781,7 +781,7 @@ class Handler(SimpleHTTPRequestHandler):
                 request = self._json_request()
                 self._json_response(201, MULTIPLAYER_SESSIONS.host(
                     request.get("game"), request.get("lobbyName"),
-                    request.get("maxPlayers", 3)))
+                    request.get("maxPlayers", 4)))
             except (ValueError, TypeError, json.JSONDecodeError) as error:
                 self._json_response(400, {"error": str(error)})
             return

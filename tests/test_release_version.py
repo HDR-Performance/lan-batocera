@@ -36,6 +36,28 @@ class ReleaseVersionTests(unittest.TestCase):
         self.assertIn("requires an existing Batocera installation", installer)
         self.assertIn("archive/refs/tags/v${LAN_BATOCERA_VERSION}.tar.gz", installer)
 
+    def test_ssh_installers_match_release_version(self):
+        with open(os.path.join(REPOSITORY_ROOT, "VERSION"), encoding="utf-8") as version_file:
+            version = version_file.read().strip()
+
+        installer_paths = ("install-over-ssh.ps1", "install-over-ssh.sh")
+        for installer_path in installer_paths:
+            with self.subTest(installer=installer_path):
+                with open(os.path.join(REPOSITORY_ROOT, installer_path), encoding="utf-8") as installer_file:
+                    installer = installer_file.read()
+                self.assertIn(version, installer)
+                self.assertIn("standalone-install.sh", installer)
+                self.assertNotIn("192.168.0.", installer)
+
+    def test_readme_matches_release_version(self):
+        with open(os.path.join(REPOSITORY_ROOT, "VERSION"), encoding="utf-8") as version_file:
+            version = version_file.read().strip()
+        with open(os.path.join(REPOSITORY_ROOT, "README.md"), encoding="utf-8") as readme_file:
+            readme = readme_file.read()
+
+        self.assertIn(f"Current release: **v{version}**", readme)
+        self.assertIn(f"/v{version}/standalone-install.sh", readme)
+
     def test_readme_distinguishes_default_credentials(self):
         with open(os.path.join(REPOSITORY_ROOT, "README.md"), encoding="utf-8") as readme_file:
             readme = readme_file.read()

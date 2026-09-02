@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.6.0**. Releases follow Semantic Versioning; contribution
+Current release: **v1.6.1**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -128,6 +128,26 @@ not been enabled:
 ssh root@BATOCERA-IP
 ```
 
+From Windows PowerShell, the included version-pinned installer connects to the
+device, prompts for its current SSH password, installs the release, and restarts
+the LAN services:
+
+```powershell
+.\install-over-ssh.ps1 192.168.x.x
+```
+
+From macOS or Linux:
+
+```bash
+chmod +x install-over-ssh.sh
+./install-over-ssh.sh 192.168.x.x
+```
+
+Replace `192.168.x.x` with the device address, or omit it when
+`batocera.local` resolves. Neither helper stores a password. They work on both
+the Raspberry Pi 3 B+ and CM4 Batocera targets because both use the same
+64-bit ARM release payload.
+
 On the Batocera SSH prompt, download and install the public project:
 
 ```bash
@@ -147,7 +167,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.6.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.6.1/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
