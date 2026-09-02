@@ -27,6 +27,9 @@ class PlayPageTests(unittest.TestCase):
         with open(PLAY_PAGE, encoding="utf-8") as source:
             page = source.read()
         self.assertIn("Choose a saved state", page)
+        self.assertIn('id="stateOpen"', page)
+        self.assertIn('id="saveState"', page)
+        self.assertIn("Saved states could not be opened", page)
         self.assertIn('class="delete-choice" type="checkbox"', page)
         self.assertIn('class="load-choice" type="radio"', page)
         self.assertIn("/api/states/data", page)

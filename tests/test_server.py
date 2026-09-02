@@ -86,6 +86,28 @@ class ArcadeScannerTests(unittest.TestCase):
 
 
 class SaveStateTests(unittest.TestCase):
+    def test_every_lan_system_can_store_load_and_delete_browser_states(self):
+        original_root, original_native = server.STATE_ROOT, server.BATOCERA_SAVES_ROOT
+        with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as native:
+            server.STATE_ROOT, server.BATOCERA_SAVES_ROOT = root, native
+            try:
+                for system, (core, _name, _category, extensions) in server.SYSTEMS.items():
+                    extension = sorted(extensions)[0]
+                    game = f"{core}:{system}/save-test{extension}"
+                    expected_state = f"state-{system}".encode()
+                    saved = server.save_state(
+                        game,
+                        f"{system} state",
+                        base64.b64encode(expected_state).decode(),
+                    )
+                    self.assertEqual(server.list_states(game)[0]["id"], saved["id"])
+                    with open(server.state_file(game, saved["id"], ".state"), "rb") as source:
+                        self.assertEqual(source.read(), expected_state)
+                    self.assertEqual(server.delete_states(game, [saved["id"]]), 1)
+                    self.assertEqual(server.list_states(game), [])
+            finally:
+                server.STATE_ROOT, server.BATOCERA_SAVES_ROOT = original_root, original_native
+
     def test_save_list_native_mirror_load_and_multi_delete(self):
         original_root, original_native = server.STATE_ROOT, server.BATOCERA_SAVES_ROOT
         with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as native:

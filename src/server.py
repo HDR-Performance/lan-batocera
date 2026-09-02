@@ -32,7 +32,8 @@ BATOCERA_SAVES_ROOT = "/userdata/saves"
 MAX_STATE_BYTES = 64 * 1024 * 1024
 MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024
 NATIVE_STATE_SYSTEMS = {"nes", "snes", "gb", "gbc", "gba", "megadrive", "sega32x",
-                        "mastersystem", "gamegear", "atari2600", "atari7800", "lynx"}
+                        "mastersystem", "gamegear", "atari2600", "atari7800", "lynx",
+                        "ngp", "ngpc", "wswan", "wswanc"}
 NATIVE_EMULATOR_MARKERS = ("/retroarch", "/mupen64plus", "/ppsspp", "/pcsx2",
                            "/dolphin-emu", "/duckstation", "/rpcs3", "/xemu", "/cemu")
 ARTWORK_MAX_BYTES = 8 * 1024 * 1024
