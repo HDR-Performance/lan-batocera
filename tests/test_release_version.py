@@ -18,6 +18,7 @@ class ReleaseVersionTests(unittest.TestCase):
             installer = installer_file.read()
         self.assertIn('install -m 0644 "$APP_ROOT/VERSION" "$ARCADE_ROOT/VERSION"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/controller-presets.js"', installer)
+        self.assertIn('install -m 0644 "$APP_ROOT/web/touch-layout.js"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/fullscreen-controls.js"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/mobile-lifecycle.js"', installer)
         self.assertIn('install -m 0644 "$APP_ROOT/web/themes.js"', installer)

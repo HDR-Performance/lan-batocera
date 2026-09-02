@@ -259,6 +259,14 @@ so the manual selector remains available even when automatic detection reports
 no controller. EmulatorJS's in-game controller settings remain available for
 unusual or third-party pads.
 
+All three physical-controller presets include both stick clicks and the complete
+left/right analog-axis map used by N64 and other analog systems. Touch mode gives
+the N64 stick a larger movement target. Choose **Move / Resize Touch Controls**
+from the in-game controller menu to tap and drag the top, bottom, left, or right
+control group. The selected group can be resized from 70% to 150%. Portrait and
+landscape layouts are stored separately in that browser, and **Reset Layout**
+restores the current orientation without changing the other one.
+
 The game page includes a large **Fullscreen** button with safe-area spacing for
 phone screens. Fullscreen must be started from that tap because browsers require
 direct user interaction. The button changes to **Exit Fullscreen** while active.

@@ -13,7 +13,15 @@
     12: { value: 'tab', value2: 'LEFT_BOTTOM_SHOULDER' },
     13: { value: 'r', value2: 'RIGHT_BOTTOM_SHOULDER' },
     14: { value: '', value2: 'LEFT_STICK' },
-    15: { value: '' }
+    15: { value: '', value2: 'RIGHT_STICK' },
+    16: { value: '', value2: 'LEFT_STICK_X:+1' },
+    17: { value: '', value2: 'LEFT_STICK_X:-1' },
+    18: { value: '', value2: 'LEFT_STICK_Y:+1' },
+    19: { value: '', value2: 'LEFT_STICK_Y:-1' },
+    20: { value: '', value2: 'RIGHT_STICK_X:+1' },
+    21: { value: '', value2: 'RIGHT_STICK_X:-1' },
+    22: { value: '', value2: 'RIGHT_STICK_Y:+1' },
+    23: { value: '', value2: 'RIGHT_STICK_Y:-1' }
   });
 
   const KEYBOARD_FACE_BUTTONS = Object.freeze({
