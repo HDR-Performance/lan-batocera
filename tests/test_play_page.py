@@ -30,7 +30,7 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("Choose a saved state", page)
         self.assertIn('id="stateOpen"', page)
         self.assertIn('id="saveState"', page)
-        self.assertIn("Saved states could not be opened", page)
+        self.assertIn("The save-state request timed out. The game has been resumed.", page)
         self.assertIn('class="delete-choice" type="checkbox"', page)
         self.assertIn('class="load-choice" type="radio"', page)
         self.assertIn("/api/states/data", page)
@@ -98,6 +98,9 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn('aria-controls="mobileToolsPanel"', page)
         self.assertIn("setMobileToolsOpen", page)
         self.assertIn("mobile-tools-panel.open", page)
+        self.assertIn("overflow-y:auto", page)
+        self.assertIn("overscroll-behavior:contain", page)
+        self.assertIn("bottom:max(10px,env(safe-area-inset-bottom))", page)
         self.assertIn('id="restartGame"', page)
         self.assertIn("function protectMobileRestart()", page)
         self.assertIn("restart.hidden=true", page)
@@ -115,6 +118,10 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("RESUME_INPUT_RESET_DELAY_MS=80", page)
         self.assertIn("emulator.pause?.();await sleep(RESUME_INPUT_RESET_DELAY_MS);emulator.play?.()", page)
         self.assertIn("await recoverEmulatorInput()", page)
+        self.assertIn("STATE_REQUEST_TIMEOUT_MS=15000", page)
+        self.assertIn("function fetchStateApi", page)
+        self.assertIn("showStateManager();try{const response=await fetchStateApi", page)
+        self.assertIn("finally{stateModal.classList.remove('busy');await recoverEmulatorInput()}", page)
 
     def test_game_submenus_have_back_to_game_controls(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
