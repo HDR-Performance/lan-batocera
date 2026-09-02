@@ -50,6 +50,7 @@ class ArcadeScannerTests(unittest.TestCase):
         self.assertEqual(games[0]["systemName"], "Sega 32X")
         self.assertEqual(games[0]["core"], "sega32x")
         self.assertEqual(games[0]["path"], "sega32x/Virtua Racing Deluxe.zip")
+        self.assertRegex(games[0]["revision"], r"^\d+-\d+$")
 
     def test_sega32x_rar_is_not_advertised_as_directly_playable(self):
         extensions = server.SYSTEMS["sega32x"][3]

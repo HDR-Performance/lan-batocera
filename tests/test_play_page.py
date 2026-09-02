@@ -54,10 +54,25 @@ class PlayPageTests(unittest.TestCase):
         self.assertNotIn("restart.click()", page)
         self.assertNotIn("startupRestartState", page)
 
+    def test_rom_revision_bypasses_stale_emulatorjs_cache(self):
+        with open(PLAY_PAGE, encoding="utf-8") as source:
+            page = source.read()
+        self.assertIn("romRevision=p.get('revision')||''", page)
+        self.assertIn("'?revision='+encodeURIComponent(romRevision)", page)
+        self.assertIn("gameKey=core+':'+path", page)
+
+        index_path = os.path.join(os.path.dirname(PLAY_PAGE), "index.html")
+        with open(index_path, encoding="utf-8") as source:
+            library_page = source.read()
+        self.assertIn("game.revision||''", library_page)
+
     def test_desktop_defaults_to_hq_scaling_with_mobile_native_fallback(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
             page = source.read()
-        self.assertIn("coarsePointer?'disabled':'2xScaleHQ.glslp'", page)
+        self.assertIn("coarsePointer||compatibilityCore?'disabled':'2xScaleHQ.glslp'", page)
+        self.assertIn("core==='n64'||core==='c64'", page)
+        self.assertIn("window.EJS_cacheConfig={enabled:!compatibilityCore", page)
+        self.assertIn("window.EJS_forceLegacyCores=core==='n64'&&coarsePointer", page)
         self.assertIn("window.EJS_defaultOptions={shader:defaultShader}", page)
         self.assertIn("Video: 2× HQ", page)
 

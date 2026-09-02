@@ -114,11 +114,16 @@ def games():
                     continue
                 full = os.path.join(base, filename)
                 relative = os.path.relpath(full, ROMS_ROOT).replace(os.sep, "/")
+                try:
+                    file_status = os.stat(full)
+                except OSError:
+                    continue
                 details = metadata.get(os.path.realpath(full), {})
                 display_name = str(details.get("name", "")).strip() or os.path.splitext(filename)[0]
                 item = {"name": display_name, "system": system,
                         "systemName": system_name, "category": category,
-                        "core": core, "path": relative}
+                        "core": core, "path": relative,
+                        "revision": f"{file_status.st_size}-{file_status.st_mtime_ns}"}
                 image = details.get("image")
                 if image and os.path.isfile(os.path.join(folder, image)):
                     item["image"] = f"{system}/{image.replace(os.sep, '/')}"

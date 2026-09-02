@@ -38,6 +38,7 @@
       core: game.core,
       path: game.path,
       name: game.name,
+      revision: game.revision || '',
       launch: Date.now().toString(),
     });
     return `/play.html?${query}`;
@@ -51,7 +52,8 @@
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        game: {core: game.core, path: game.path, name: game.name, origin: location.origin},
+        game: {core: game.core, path: game.path, name: game.name,
+          revision: game.revision || '', origin: location.origin},
         lobbyName,
         maxPlayers: 3,
       }),

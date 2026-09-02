@@ -253,6 +253,11 @@ browser saves are separate from Batocera's native emulator saves.
 Commodore 64 games are scanned from `/userdata/roms/c64` and use EmulatorJS's
 cycle-accurate `c64` core. Supported files match Batocera's C64 set: `.d64`,
 `.d81`, `.crt`, `.prg`, `.tap`, `.t64`, `.m3u`, `.zip`, and `.7z`.
+N64 and C64 launches bypass EmulatorJS's internal ROM/core cache and use a
+size-and-modification revision in the ROM URL. Replacing a ROM at the same path
+therefore downloads the new file without changing its save-state identity.
+These systems also default to native video; mobile N64 uses the legacy core for
+broader WebGL compatibility.
 
 The **Controllers** menu provides pre-mapped Xbox, PlayStation, and Nintendo
 Switch layouts. A selection is saved in that browser and applied before

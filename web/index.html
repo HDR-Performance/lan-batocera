@@ -119,7 +119,7 @@ function gameCard(game){
   card.className='game';
   card.dataset.path=game.path;
   link.className='game-link';
-  link.href='/play.html?core='+encodeURIComponent(game.core)+'&path='+encodeURIComponent(game.path)+'&name='+encodeURIComponent(game.name);
+  link.href='/play.html?core='+encodeURIComponent(game.core)+'&path='+encodeURIComponent(game.path)+'&name='+encodeURIComponent(game.name)+'&revision='+encodeURIComponent(game.revision||'');
   link.onclick=async event=>{event.preventDefault();recordRecent(game.path);try{location.href=await window.LanMultiplayer.launch(game)}catch(error){els.status.textContent=error.message}};
   favorite.type='button';
   favorite.className='favorite'+(isFavorite?' active':'');

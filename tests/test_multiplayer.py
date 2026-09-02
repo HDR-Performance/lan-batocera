@@ -91,6 +91,12 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn("if(states.length&&!multiplayerRole)", page)
         self.assertIn("session?.players>1", page)
 
+    def test_multiplayer_preserves_rom_revision_for_every_player(self):
+        with open(os.path.join(ROOT, "web", "multiplayer.js"), encoding="utf-8") as source:
+            script = source.read()
+        self.assertIn("revision: game.revision || ''", script)
+        self.assertIn("gameLaunchUrl(session.game)", script)
+
     def test_installer_copies_multiplayer_components(self):
         with open(os.path.join(ROOT, "install.sh"), encoding="utf-8") as source:
             installer = source.read()
