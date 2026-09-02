@@ -250,6 +250,10 @@ client browser needs internet access when starting a game. ROM data is served by
 the Batocera device over the LAN. Controllers connect to the browser device, and
 browser saves are separate from Batocera's native emulator saves.
 
+Commodore 64 games are scanned from `/userdata/roms/c64` and use EmulatorJS's
+cycle-accurate `c64` core. Supported files match Batocera's C64 set: `.d64`,
+`.d81`, `.crt`, `.prg`, `.tap`, `.t64`, `.m3u`, `.zip`, and `.7z`.
+
 The **Controllers** menu provides pre-mapped Xbox, PlayStation, and Nintendo
 Switch layouts. A selection is saved in that browser and applied before
 EmulatorJS starts. On phones, **Touch / Browser Default** keeps EmulatorJS's

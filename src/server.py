@@ -80,6 +80,9 @@ SYSTEMS = {
     "gbc": ("gb", "Nintendo Game Boy Color", "Handheld", {".gbc", ".zip"}),
     "gba": ("gba", "Nintendo Game Boy Advance", "Handheld", {".gba", ".zip"}),
     "n64": ("n64", "Nintendo 64", "Console", {".n64", ".v64", ".z64", ".zip"}),
+    "c64": ("c64", "Commodore 64", "Computer", {
+        ".d64", ".d81", ".crt", ".prg", ".tap", ".t64", ".m3u", ".zip", ".7z"
+    }),
     "atari2600": ("atari2600", "Atari 2600", "Console", {".a26", ".bin", ".zip"}),
     "atari7800": ("atari7800", "Atari 7800", "Console", {".a78", ".bin", ".zip"}),
     "lynx": ("lynx", "Atari Lynx", "Handheld", {".lnx", ".zip"}),

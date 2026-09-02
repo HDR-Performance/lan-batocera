@@ -56,6 +56,33 @@ class ArcadeScannerTests(unittest.TestCase):
         self.assertIn(".zip", extensions)
         self.assertNotIn(".rar", extensions)
 
+    def test_scans_batocera_c64_formats_with_emulatorjs_c64_core(self):
+        with tempfile.TemporaryDirectory() as roms:
+            folder = os.path.join(roms, "c64")
+            os.makedirs(folder)
+            for filename in ("Summer Games.tap", "Impossible Mission.d64"):
+                with open(os.path.join(folder, filename), "wb") as output:
+                    output.write(b"fixture")
+            previous_root = server.ROMS_ROOT
+            server.ROMS_ROOT = roms
+            try:
+                games = server.games()
+            finally:
+                server.ROMS_ROOT = previous_root
+
+        self.assertEqual(len(games), 2)
+        self.assertTrue(all(game["system"] == "c64" for game in games))
+        self.assertTrue(all(game["systemName"] == "Commodore 64" for game in games))
+        self.assertTrue(all(game["category"] == "Computer" for game in games))
+        self.assertTrue(all(game["core"] == "c64" for game in games))
+
+    def test_c64_supports_all_batocera_documented_formats(self):
+        extensions = server.SYSTEMS["c64"][3]
+        expected_extensions = {
+            ".d64", ".d81", ".crt", ".prg", ".tap", ".t64", ".m3u", ".zip", ".7z"
+        }
+        self.assertEqual(extensions, expected_extensions)
+
 
 class SaveStateTests(unittest.TestCase):
     def test_save_list_native_mirror_load_and_multi_delete(self):

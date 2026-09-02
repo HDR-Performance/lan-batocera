@@ -70,6 +70,7 @@
 const PAGE_SIZE=matchMedia('(max-width:620px)').matches?60:120,FAVORITES_KEY='batoceraLanFavorites',RECENT_KEY='batoceraLanRecent';
 const ICON=(body)=>`<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 const CONSOLE_ICONS={
+  c64:ICON('<rect x="9" y="19" width="46" height="29" rx="4"/><path d="M14 25h36M15 31h34M15 37h34M18 43h28"/><path d="M18 27v18m7-18v18m7-18v18m7-18v18m7-18v18"/>'),
   atari2600:ICON('<path d="M10 22h44l-3 24H13z"/><path d="M14 28h36M22 22l3-7h14l3 7"/><circle cx="22" cy="37" r="3"/><path d="M34 34h10m-5-4v8"/>'),
   atari7800:ICON('<rect x="8" y="21" width="48" height="24" rx="5"/><path d="M13 28h38M18 34h16"/><circle cx="44" cy="36" r="3"/><circle cx="51" cy="36" r="2"/>'),
   nes:ICON('<path d="M7 24h50v25H7z"/><path d="M11 29h34v6H11zM12 41h18"/><circle cx="47" cy="41" r="3"/><path d="M54 49v-9"/>'),

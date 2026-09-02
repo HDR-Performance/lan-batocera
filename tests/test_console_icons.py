@@ -12,7 +12,7 @@ class ConsoleIconTests(unittest.TestCase):
             cls.index = source.read()
 
     def test_supported_console_icons_are_bundled_locally(self):
-        for system in ("atari2600", "nes", "snes", "n64", "megadrive", "sega32x", "gba"):
+        for system in ("atari2600", "nes", "snes", "n64", "megadrive", "sega32x", "gba", "c64"):
             self.assertIn(system + ":ICON(", self.index)
         self.assertNotIn("<img class=\"console-icon\"", self.index)
 
