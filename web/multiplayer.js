@@ -3,6 +3,7 @@
 
   const MODE_KEY = 'lanBatoceraMultiplayerMode';
   const LOBBY_NAME_KEY = 'lanBatoceraLobbyName';
+  const DEFAULT_LOBBY_NAME = 'Player 1 Lobby';
   const POLL_INTERVAL_MS = 2000;
   const VALID_MODES = Object.freeze(['host', 'join2', 'join3', 'off']);
 
@@ -43,10 +44,9 @@
   }
 
   async function hostGame(game) {
-    const lobbyName = readStorage(LOBBY_NAME_KEY).trim();
-    if (!lobbyName) {
-      throw new Error('Open Multiplayer Settings and name the Player 1 lobby first.');
-    }
+    const lobbyName = readStorage(LOBBY_NAME_KEY, DEFAULT_LOBBY_NAME).trim() ||
+      DEFAULT_LOBBY_NAME;
+    writeStorage(LOBBY_NAME_KEY, lobbyName);
     const response = await fetch('/api/multiplayer/host', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -164,7 +164,7 @@
       }
     }
 
-    lobbyNameInput.value = readStorage(LOBBY_NAME_KEY);
+    lobbyNameInput.value = readStorage(LOBBY_NAME_KEY, DEFAULT_LOBBY_NAME);
     lobbyNameInput.oninput = () => writeStorage(LOBBY_NAME_KEY, lobbyNameInput.value.trim());
     refreshButton.onclick = refreshLobbies;
     openButton.onclick = () => {

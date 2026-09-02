@@ -72,6 +72,9 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn("/api/multiplayer/sessions", script)
         self.assertIn("/api/multiplayer/join", script)
         self.assertIn("location.replace(joinUrl(result, player))", script)
+        self.assertIn("DEFAULT_LOBBY_NAME = 'Player 1 Lobby'", script)
+        self.assertIn("readStorage(LOBBY_NAME_KEY, DEFAULT_LOBBY_NAME)", script)
+        self.assertNotIn("name the Player 1 lobby first", script)
 
     def test_play_page_enables_and_automates_emulatorjs_netplay(self):
         with open(os.path.join(ROOT, "web", "play.html"), encoding="utf-8") as source:
@@ -85,7 +88,7 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn("emulator.netplayMenu.style.display='none'", page)
         self.assertIn("Player 1", page)
         self.assertIn("multiplayerPlayer", page)
-        self.assertIn("startupRestart='multiplayer-skip'", page)
+        self.assertIn("if(states.length&&!multiplayerRole)", page)
         self.assertIn("session?.players>1", page)
 
     def test_installer_copies_multiplayer_components(self):

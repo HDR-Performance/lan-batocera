@@ -598,6 +598,51 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         super().end_headers()
 
+    def _serve_rom(self, request_path, include_body):
+        try:
+            filename = safe_join(ROMS_ROOT, urllib.parse.unquote(request_path[6:]))
+            if not os.path.isfile(filename):
+                raise FileNotFoundError
+            size = os.path.getsize(filename)
+        except (FileNotFoundError, PermissionError, ValueError):
+            self.send_error(404)
+            return
+        try:
+            byte_range = parse_byte_range(self.headers.get("Range"), size)
+        except ValueError:
+            self.send_response(416)
+            self.send_header("Content-Range", f"bytes */{size}")
+            self.end_headers()
+            return
+        start, end = byte_range or (0, size - 1)
+        response_size = end - start + 1
+        self.send_response(206 if byte_range else 200)
+        self.send_header("Content-Type", mimetypes.guess_type(filename)[0] or
+                         "application/octet-stream")
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Content-Length", str(response_size))
+        if byte_range:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.end_headers()
+        if not include_body:
+            return
+        try:
+            with open(filename, "rb") as source:
+                source.seek(start)
+                remaining = response_size
+                while remaining and (chunk := source.read(min(1024 * 1024, remaining))):
+                    self.wfile.write(chunk)
+                    remaining -= len(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path.startswith("/roms/"):
+            self._serve_rom(parsed.path, include_body=False)
+            return
+        super().do_HEAD()
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/games":
@@ -658,33 +703,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_error(404)
             return
         if parsed.path.startswith("/roms/"):
-            try:
-                filename = safe_join(ROMS_ROOT, urllib.parse.unquote(parsed.path[6:]))
-                if not os.path.isfile(filename):
-                    raise FileNotFoundError
-                size = os.path.getsize(filename)
-                byte_range = parse_byte_range(self.headers.get("Range"), size)
-                start, end = byte_range or (0, size - 1)
-                response_size = end - start + 1
-                self.send_response(206 if byte_range else 200)
-                self.send_header("Content-Type", mimetypes.guess_type(filename)[0] or "application/octet-stream")
-                self.send_header("Accept-Ranges", "bytes")
-                self.send_header("Content-Length", str(response_size))
-                if byte_range:
-                    self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
-                self.end_headers()
-                with open(filename, "rb") as source:
-                    source.seek(start)
-                    remaining = response_size
-                    while remaining and (chunk := source.read(min(1024 * 1024, remaining))):
-                        self.wfile.write(chunk)
-                        remaining -= len(chunk)
-            except ValueError:
-                self.send_response(416)
-                self.send_header("Content-Range", f"bytes */{size}")
-                self.end_headers()
-            except (FileNotFoundError, PermissionError):
-                self.send_error(404)
+            self._serve_rom(parsed.path, include_body=True)
             return
         super().do_GET()
 

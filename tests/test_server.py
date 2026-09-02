@@ -25,6 +25,10 @@ class ArcadeScannerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             server.parse_byte_range("bytes=100-120", 100)
 
+    def test_rom_head_requests_use_the_same_metadata_handler_as_get(self):
+        self.assertTrue(hasattr(server.Handler, "do_HEAD"))
+        self.assertTrue(hasattr(server.Handler, "_serve_rom"))
+
     def test_project_version_is_semantic(self):
         self.assertRegex(server.project_version(), r"^\d+\.\d+\.\d+$")
 

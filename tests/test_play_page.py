@@ -43,16 +43,16 @@ class PlayPageTests(unittest.TestCase):
         self.assertIn("/api/session-stop", page)
         self.assertIn("X-LAN-Batocera-Action", page)
 
-    def test_every_core_gets_one_guarded_startup_restart(self):
+    def test_game_start_does_not_restart_a_partially_loaded_emulator(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
             page = source.read()
         self.assertIn("window.EJS_onGameStart=handleGameStart", page)
         self.assertIn("prepareStartedGame()", page)
-        self.assertIn("document.body.append(loader);prepareStartedGame()", page)
-        self.assertIn("startupRestartState!=='pending'", page)
-        self.assertIn("waitForMenuButton('Restart')", page)
-        self.assertIn("restart.click()", page)
-        self.assertIn("dataset.startupRestart='complete'", page)
+        self.assertIn("if(gameStartHandled)return", page)
+        self.assertNotIn("document.body.append(loader);prepareStartedGame()", page)
+        self.assertNotIn("waitForMenuButton('Restart')", page)
+        self.assertNotIn("restart.click()", page)
+        self.assertNotIn("startupRestartState", page)
 
     def test_desktop_defaults_to_hq_scaling_with_mobile_native_fallback(self):
         with open(PLAY_PAGE, encoding="utf-8") as source:
