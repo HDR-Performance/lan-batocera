@@ -5,7 +5,7 @@
   const LOBBY_NAME_KEY = 'lanBatoceraLobbyName';
   const DEFAULT_LOBBY_NAME = 'Player 1 Lobby';
   const POLL_INTERVAL_MS = 2000;
-  const VALID_MODES = Object.freeze(['host', 'join2', 'join3', 'off']);
+  const VALID_MODES = Object.freeze(['host', 'join2', 'join3', 'join4', 'off']);
 
   function readStorage(key, fallback = '') {
     try {
@@ -55,7 +55,7 @@
         game: {core: game.core, path: game.path, name: game.name,
           revision: game.revision || '', origin: location.origin},
         lobbyName,
-        maxPlayers: 3,
+        maxPlayers: 4,
       }),
     });
     const session = await response.json();
@@ -97,6 +97,7 @@
 
     function selectedPlayer() {
       const mode = storedMode();
+      if (mode === 'join4') return 4;
       return mode === 'join3' ? 3 : 2;
     }
 
@@ -107,7 +108,8 @@
       lobbyList.hidden = !mode.startsWith('join');
       refreshButton.hidden = !mode.startsWith('join');
       openButton.textContent = mode === 'host' ? 'Ⅰ Host Lobby' :
-        mode === 'join2' ? 'Ⅱ Player 2' : mode === 'join3' ? 'Ⅲ Player 3' : '♙ Solo Mode';
+        mode === 'join2' ? 'Ⅱ Player 2' : mode === 'join3' ? 'Ⅲ Player 3' :
+          mode === 'join4' ? 'Ⅳ Player 4' : '♙ Solo Mode';
       status.textContent = mode === 'host'
         ? 'Name the lobby, then choose a game. This device is Player 1.'
         : mode.startsWith('join')

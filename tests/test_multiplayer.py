@@ -74,6 +74,7 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn('data-multiplayer-mode="host"', page)
         self.assertIn('data-multiplayer-mode="join2"', page)
         self.assertIn('data-multiplayer-mode="join3"', page)
+        self.assertIn('data-multiplayer-mode="join4"', page)
         self.assertIn('id="multiplayerLobbyName"', page)
         self.assertIn('id="multiplayerLobbyList"', page)
         self.assertIn("/api/multiplayer/sessions", script)
@@ -82,6 +83,8 @@ class MultiplayerUiTests(unittest.TestCase):
         self.assertIn("DEFAULT_LOBBY_NAME = 'Player 1 Lobby'", script)
         self.assertIn("readStorage(LOBBY_NAME_KEY, DEFAULT_LOBBY_NAME)", script)
         self.assertNotIn("name the Player 1 lobby first", script)
+        self.assertIn("maxPlayers: 4", script)
+        self.assertIn("mode === 'join4'", script)
 
     def test_play_page_enables_and_automates_emulatorjs_netplay(self):
         with open(os.path.join(ROOT, "web", "play.html"), encoding="utf-8") as source:
