@@ -9,7 +9,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$releaseVersion = "1.8.1"
+$releaseVersion = "1.8.2"
 $installerUrl = "https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v$releaseVersion/standalone-install.sh"
 $remoteInstallerPath = "/tmp/lan-batocera-install.sh"
 

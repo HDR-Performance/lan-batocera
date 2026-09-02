@@ -3,6 +3,26 @@ PIDFILE=/var/run/filebrowser-quantum.pid
 PROXYPID=/var/run/filebrowser-upload-proxy.pid
 APPDIR=/userdata/system/filebrowser-quantum
 LOG=/userdata/system/logs/filebrowser-quantum.log
+SHUTDOWN_TIMEOUT_SECONDS=60
+
+stop_process() {
+  local pidfile="$1"
+  [ -f "$pidfile" ] || return 0
+  local pid
+  pid="$(cat "$pidfile")"
+  kill "$pid" 2>/dev/null || true
+  local elapsed=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$elapsed" -ge "$SHUTDOWN_TIMEOUT_SECONDS" ]; then
+      echo "Timed out waiting for process $pid to stop; restart aborted." >>"$LOG"
+      return 1
+    fi
+    sleep 1
+    elapsed=$((elapsed + 1))
+  done
+  rm -f "$pidfile"
+}
+
 case "$1" in
   start)
     mkdir -p "$APPDIR/cache" /userdata/system/logs
@@ -14,8 +34,8 @@ case "$1" in
     echo $! > "$PROXYPID"
     ;;
   stop)
-    if [ -f "$PIDFILE" ]; then kill "$(cat "$PIDFILE")" 2>/dev/null || true; rm -f "$PIDFILE"; fi
-    if [ -f "$PROXYPID" ]; then kill "$(cat "$PROXYPID")" 2>/dev/null || true; rm -f "$PROXYPID"; fi
+    stop_process "$PROXYPID" || exit 1
+    stop_process "$PIDFILE" || exit 1
     ;;
-  restart) "$0" stop; "$0" start ;;
+  restart) "$0" stop && "$0" start ;;
 esac
