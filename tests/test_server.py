@@ -87,6 +87,30 @@ class ArcadeScannerTests(unittest.TestCase):
         }
         self.assertEqual(extensions, expected_extensions)
 
+    def test_scans_psx_cue_without_duplicate_bin_entry(self):
+        with tempfile.TemporaryDirectory() as roms:
+            folder = os.path.join(roms, "psx")
+            os.makedirs(folder)
+            for filename in ("Ridge Racer.cue", "Ridge Racer.bin", "Standalone.bin"):
+                with open(os.path.join(folder, filename), "wb") as output:
+                    output.write(b"fixture")
+            previous_root = server.ROMS_ROOT
+            server.ROMS_ROOT = roms
+            try:
+                games = server.games()
+            finally:
+                server.ROMS_ROOT = previous_root
+
+        self.assertEqual([game["name"] for game in games], ["Ridge Racer", "Standalone"])
+        self.assertTrue(all(game["core"] == "psx" for game in games))
+        self.assertTrue(all(game["systemName"] == "Sony PlayStation" for game in games))
+
+    def test_psx_supports_batocera_disc_formats(self):
+        self.assertEqual(server.SYSTEMS["psx"][3], {
+            ".bin", ".cue", ".img", ".mdf", ".pbp", ".toc", ".cbn", ".m3u",
+            ".ccd", ".chd", ".iso"
+        })
+
 
 class SaveStateTests(unittest.TestCase):
     def test_exports_one_state_directly_and_multiple_states_as_portable_zip(self):

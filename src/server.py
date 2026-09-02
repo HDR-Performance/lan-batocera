@@ -54,6 +54,7 @@ ARTWORK_REPOSITORIES = {
     "n64": "Nintendo_-_Nintendo_64", "gb": "Nintendo_-_Game_Boy",
     "gbc": "Nintendo_-_Game_Boy_Color", "gba": "Nintendo_-_Game_Boy_Advance",
     "megadrive": "Sega_-_Mega_Drive_-_Genesis", "sega32x": "Sega_-_32X",
+    "psx": "Sony_-_PlayStation",
     "mastersystem": "Sega_-_Master_System_-_Mark_III", "gamegear": "Sega_-_Game_Gear",
     "ngp": "SNK_-_Neo_Geo_Pocket", "ngpc": "SNK_-_Neo_Geo_Pocket_Color",
     "wswan": "Bandai_-_WonderSwan", "wswanc": "Bandai_-_WonderSwan_Color",
@@ -88,6 +89,10 @@ SYSTEMS = {
     "gbc": ("gb", "Nintendo Game Boy Color", "Handheld", {".gbc", ".zip"}),
     "gba": ("gba", "Nintendo Game Boy Advance", "Handheld", {".gba", ".zip"}),
     "n64": ("n64", "Nintendo 64", "Console", {".n64", ".v64", ".z64", ".zip"}),
+    "psx": ("psx", "Sony PlayStation", "Console", {
+        ".bin", ".cue", ".img", ".mdf", ".pbp", ".toc", ".cbn", ".m3u", ".ccd",
+        ".chd", ".iso"
+    }),
     "c64": ("c64", "Commodore 64", "Computer", {
         ".d64", ".d81", ".crt", ".prg", ".tap", ".t64", ".m3u", ".zip", ".7z"
     }),
@@ -99,6 +104,13 @@ SYSTEMS = {
     "wswan": ("ws", "WonderSwan", "Handheld", {".ws", ".wsc", ".zip"}),
     "wswanc": ("ws", "WonderSwan Color", "Handheld", {".ws", ".wsc", ".zip"}),
 }
+
+
+def is_primary_rom_file(system, filename, directory_files):
+    if system != "psx" or os.path.splitext(filename)[1].lower() != ".bin":
+        return True
+    cue_filename = os.path.splitext(filename)[0].lower() + ".cue"
+    return cue_filename not in directory_files
 
 
 def safe_join(root, relative):
@@ -117,8 +129,11 @@ def games():
             continue
         metadata = gamelist_metadata(system)
         for base, _, files in os.walk(folder):
+            directory_files = {filename.lower() for filename in files}
             for filename in files:
                 if os.path.splitext(filename)[1].lower() not in extensions:
+                    continue
+                if not is_primary_rom_file(system, filename, directory_files):
                     continue
                 full = os.path.join(base, filename)
                 relative = os.path.relpath(full, ROMS_ROOT).replace(os.sep, "/")

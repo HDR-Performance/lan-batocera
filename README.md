@@ -1,6 +1,6 @@
 # LAN Batocera
 
-Current release: **v1.7.2**. Releases follow Semantic Versioning; contribution
+Current release: **v1.8.0**. Releases follow Semantic Versioning; contribution
 and release requirements are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 LAN Batocera adds two local-network web services to a Batocera device:
@@ -46,6 +46,8 @@ Batocera's supported user-service system. The library provides console tiles
 with game counts, console and handheld categories, system filtering, title
 search, per-browser favorites and recently played history, and returns to the
 library after EmulatorJS completes its exit and save cleanup. The responsive UI
+supports PlayStation CUE/BIN, CHD, PBP, M3U, and other Batocera PSX disc formats
+without listing a companion BIN file twice. It also
 uses phone-sized touch targets and bottom navigation, desktop keyboard shortcuts,
 incremental card rendering, and automatic mobile/desktop EmulatorJS controls. It
 keeps the update control beside the page title and groups secondary library actions
@@ -181,7 +183,7 @@ a manual repository checkout. It adds LAN Batocera; it does not install,
 replace, or re-image the Batocera operating system:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.7.2/standalone-install.sh -o /tmp/lan-batocera-install.sh
+curl -fL https://raw.githubusercontent.com/HDR-Performance/lan-batocera/v1.8.0/standalone-install.sh -o /tmp/lan-batocera-install.sh
 less /tmp/lan-batocera-install.sh
 chmod +x /tmp/lan-batocera-install.sh
 /tmp/lan-batocera-install.sh
