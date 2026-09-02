@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-LAN_BATOCERA_VERSION="1.5.5"
+LAN_BATOCERA_VERSION="1.5.6"
 REPOSITORY="HDR-Performance/lan-batocera"
 ARCHIVE_URL="https://github.com/${REPOSITORY}/archive/refs/tags/v${LAN_BATOCERA_VERSION}.tar.gz"
 TEMPORARY_DIRECTORY="$(mktemp -d /tmp/lan-batocera-standalone.XXXXXX)"
